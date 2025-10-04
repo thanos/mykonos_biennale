@@ -17,27 +17,33 @@ Building a dark, artistic, experimental website for the Mykonos Biennale arts an
   - [x] Event schema (title, type, date, location, description, biennale_id)
   - [x] Content context with full CRUD operations
   - [x] Migration with both tables, indexes, and constraints
-- [ ] Create public-facing pages
-  - [ ] Home/current biennale page (dark, dramatic design)
-  - [ ] Archive page (past biennales 2013-2025)
-  - [ ] Program/events page (exhibitions, performances, video graffiti, dramatic nights)
+- [x] Create public-facing home page (Step 10 of 12 complete!)
+  - [x] BiennaleLive - displays current/featured biennale (2025)
+  - [x] Auto-creates default 2025 biennale if missing
+  - [x] Program preview cards (6 event types)
+  - [x] Archive teaser (2024, 2022, 2015, 2013)
+  - [x] Dark dramatic design matching mockup
+  - [x] Router updated with `/` route
+- [ ] Create remaining public pages
+  - [ ] Archive page (list past biennales)
+  - [ ] Archive detail page (show specific year)
+  - [ ] Program/events page (filter by type)
   - [ ] About page
 - [ ] Create admin backend
   - [ ] Admin dashboard with navigation
   - [ ] Biennale edition management (CRUD)
   - [ ] Event/program management (CRUD)
-- [ ] Update router with all public and admin routes
-- [ ] Visit and verify functionality
+- [ ] Visit and verify all functionality
 
 ## Design Direction
-- **Dark theme** with dramatic typography
-- **Experimental aesthetic** - bold, artistic, mysterious
-- **Mobile-first** responsive design
+- **Dark theme** with dramatic typography ✅
+- **Experimental aesthetic** - bold, artistic, mysterious ✅
+- **Mobile-first** responsive design ✅
 - Inspired by existing site: https://www.mykonosbiennale.com
 
 ## Technical Stack
-- Phoenix 1.8 with LiveView
-- SQLite database
-- Tailwind CSS v4 + daisyUI
-- Authentication via phx.gen.auth
+- Phoenix 1.8 with LiveView ✅
+- SQLite database ✅
+- Tailwind CSS v4 + daisyUI ✅
+- Authentication via phx.gen.auth ✅
 
