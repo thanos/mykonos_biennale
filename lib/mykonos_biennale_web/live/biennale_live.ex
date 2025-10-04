@@ -44,7 +44,7 @@ defmodule MykonosBiennaleWeb.BiennaleLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash}>
       <div class="min-h-screen bg-black text-white">
         <%!-- Hero Section --%>
         <div class="relative min-h-screen flex flex-col items-center justify-center px-6 py-20">
