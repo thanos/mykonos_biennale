@@ -11,7 +11,7 @@ Building a dark, artistic, experimental website for the Mykonos Biennale arts an
   - [x] Update `app.css` with dark theme
   - [x] Update `root.html.heex` (force dark theme)
   - [x] Update `<Layouts.app>` component
-- [ ] Set up authentication with `mix phx.gen.auth` for admin access
+- [x] Set up authentication with `mix phx.gen.auth` for admin access
 - [ ] Create public-facing pages
   - [ ] Home/current biennale page (dark, dramatic design)
   - [ ] Archive page (past biennales 2013-2025)
