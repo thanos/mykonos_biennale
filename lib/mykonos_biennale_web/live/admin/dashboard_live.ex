@@ -1,0 +1,227 @@
+defmodule MykonosBiennaleWeb.Admin.DashboardLive do
+  use MykonosBiennaleWeb, :live_view
+  alias MykonosBiennale.Content
+
+  @impl true
+  def mount(_params, _session, socket) do
+    biennales = Content.list_biennales()
+    all_events = Content.list_events()
+
+    # Calculate stats
+    total_biennales = length(biennales)
+    total_events = length(all_events)
+
+    # Events by type
+    events_by_type = Enum.group_by(all_events, & &1.type)
+    event_type_counts = Enum.map(events_by_type, fn {type, events} -> {type, length(events)} end)
+
+    # Recent biennales (last 3)
+    recent_biennales = Enum.take(biennales, 3)
+
+    {:ok,
+     socket
+     |> assign(:page_title, "Admin Dashboard")
+     |> assign(:total_biennales, total_biennales)
+     |> assign(:total_events, total_events)
+     |> assign(:event_type_counts, event_type_counts)
+     |> assign(:recent_biennales, recent_biennales)}
+  end
+
+  @impl true
+  def handle_params(_params, _uri, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def render(assigns) do
+    ~H"""
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
+      <div class="min-h-screen bg-gradient-to-br from-gray-950 via-black to-gray-900">
+        <%!-- Admin Header --%>
+        <div class="border-b border-gray-800 bg-black/50 backdrop-blur-sm sticky top-0 z-10">
+          <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-8">
+                <h1 class="text-2xl font-bold uppercase tracking-tight text-white">
+                  Admin Dashboard
+                </h1>
+
+                <nav class="hidden md:flex gap-6">
+                  <.link
+                    navigate={~p"/admin"}
+                    class="text-sm text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+                  >
+                    Dashboard
+                  </.link>
+                  <.link
+                    navigate={~p"/admin/biennales"}
+                    class="text-sm text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+                  >
+                    Biennales
+                  </.link>
+                  <.link
+                    navigate={~p"/admin/events"}
+                    class="text-sm text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+                  >
+                    Events
+                  </.link>
+                </nav>
+              </div>
+
+              <div class="flex items-center gap-4">
+                <.link
+                  navigate={~p"/"}
+                  class="text-sm text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+                >
+                  View Site
+                </.link>
+                <div class="h-6 w-px bg-gray-700"></div>
+                <span class="text-sm text-gray-500">{@current_scope.user.email}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <%!-- Main Content --%>
+        <div class="max-w-7xl mx-auto px-6 py-12">
+          <%!-- Stats Grid --%>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <%!-- Total Biennales --%>
+            <div class="bg-gradient-to-br from-purple-900/20 to-purple-950/20 border border-purple-800/30 rounded-lg p-6 hover:border-purple-700/50 transition-colors">
+              <div class="flex items-center justify-between mb-4">
+                <.icon name="hero-calendar" class="size-8 text-purple-400" />
+                <span class="text-3xl font-bold text-white">{@total_biennales}</span>
+              </div>
+              <h3 class="text-sm uppercase tracking-wider text-gray-400">Total Biennales</h3>
+            </div>
+
+            <%!-- Total Events --%>
+            <div class="bg-gradient-to-br from-blue-900/20 to-blue-950/20 border border-blue-800/30 rounded-lg p-6 hover:border-blue-700/50 transition-colors">
+              <div class="flex items-center justify-between mb-4">
+                <.icon name="hero-star" class="size-8 text-blue-400" />
+                <span class="text-3xl font-bold text-white">{@total_events}</span>
+              </div>
+              <h3 class="text-sm uppercase tracking-wider text-gray-400">Total Events</h3>
+            </div>
+
+            <%!-- Exhibitions --%>
+            <div class="bg-gradient-to-br from-green-900/20 to-green-950/20 border border-green-800/30 rounded-lg p-6 hover:border-green-700/50 transition-colors">
+              <div class="flex items-center justify-between mb-4">
+                <.icon name="hero-photo" class="size-8 text-green-400" />
+                <span class="text-3xl font-bold text-white">
+                  {get_type_count(@event_type_counts, "exhibition")}
+                </span>
+              </div>
+              <h3 class="text-sm uppercase tracking-wider text-gray-400">Exhibitions</h3>
+            </div>
+
+            <%!-- Performances --%>
+            <div class="bg-gradient-to-br from-red-900/20 to-red-950/20 border border-red-800/30 rounded-lg p-6 hover:border-red-700/50 transition-colors">
+              <div class="flex items-center justify-between mb-4">
+                <.icon name="hero-sparkles" class="size-8 text-red-400" />
+                <span class="text-3xl font-bold text-white">
+                  {get_type_count(@event_type_counts, "performance")}
+                </span>
+              </div>
+              <h3 class="text-sm uppercase tracking-wider text-gray-400">Performances</h3>
+            </div>
+          </div>
+
+          <%!-- Quick Actions --%>
+          <div class="mb-12">
+            <h2 class="text-xl font-bold uppercase mb-6 text-gray-300">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <.link
+                navigate={~p"/admin/biennales/new"}
+                class="flex items-center gap-4 p-6 bg-gradient-to-r from-purple-900/30 to-purple-800/20 border border-purple-700/30 rounded-lg hover:border-purple-600/50 transition-all group"
+              >
+                <div class="p-3 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30 transition-colors">
+                  <.icon name="hero-plus" class="size-6 text-purple-400" />
+                </div>
+                <div>
+                  <h3 class="font-bold text-white uppercase tracking-wider">New Biennale</h3>
+                  <p class="text-sm text-gray-400">Create a new biennale edition</p>
+                </div>
+              </.link>
+
+              <.link
+                navigate={~p"/admin/events/new"}
+                class="flex items-center gap-4 p-6 bg-gradient-to-r from-blue-900/30 to-blue-800/20 border border-blue-700/30 rounded-lg hover:border-blue-600/50 transition-all group"
+              >
+                <div class="p-3 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
+                  <.icon name="hero-plus" class="size-6 text-blue-400" />
+                </div>
+                <div>
+                  <h3 class="font-bold text-white uppercase tracking-wider">New Event</h3>
+                  <p class="text-sm text-gray-400">Add an event to a biennale</p>
+                </div>
+              </.link>
+            </div>
+          </div>
+
+          <%!-- Recent Biennales --%>
+          <div>
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-bold uppercase text-gray-300">Recent Biennales</h2>
+              <.link
+                navigate={~p"/admin/biennales"}
+                class="text-sm text-gray-400 hover:text-white uppercase tracking-wider transition-colors"
+              >
+                View All →
+              </.link>
+            </div>
+
+            <%= if @recent_biennales == [] do %>
+              <div class="text-center py-12 border border-gray-800 rounded-lg">
+                <p class="text-gray-500 mb-4">No biennales created yet.</p>
+                <.link
+                  navigate={~p"/admin/biennales/new"}
+                  class="inline-block px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold uppercase tracking-wider rounded-lg transition-colors"
+                >
+                  Create First Biennale
+                </.link>
+              </div>
+            <% else %>
+              <div class="space-y-4">
+                <%= for biennale <- @recent_biennales do %>
+                  <.link
+                    navigate={~p"/admin/biennales/#{biennale.id}"}
+                    class="block p-6 bg-gray-900/50 border border-gray-800 rounded-lg hover:border-gray-700 transition-all group"
+                  >
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h3 class="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
+                          {biennale.year} - {biennale.theme}
+                        </h3>
+                        <%= if biennale.start_date && biennale.end_date do %>
+                          <p class="text-sm text-gray-500 mt-1">
+                            {Calendar.strftime(biennale.start_date, "%B %d")} – {Calendar.strftime(
+                              biennale.end_date,
+                              "%B %d, %Y"
+                            )}
+                          </p>
+                        <% end %>
+                      </div>
+                      <.icon
+                        name="hero-chevron-right"
+                        class="size-5 text-gray-600 group-hover:text-purple-400 transition-colors"
+                      />
+                    </div>
+                  </.link>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </Layouts.app>
+    """
+  end
+
+  defp get_type_count(counts, type) do
+    case Enum.find(counts, fn {t, _count} -> t == type end) do
+      {_type, count} -> count
+      nil -> 0
+    end
+  end
+end
