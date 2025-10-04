@@ -12,6 +12,11 @@ Building a dark, artistic, experimental website for the Mykonos Biennale arts an
   - [x] Update `root.html.heex` (force dark theme)
   - [x] Update `<Layouts.app>` component
 - [x] Set up authentication with `mix phx.gen.auth` for admin access
+- [x] Database schemas and contexts (Step 5 of 8 complete!)
+  - [x] Biennale schema (year, theme, statement, description, dates)
+  - [x] Event schema (title, type, date, location, description, biennale_id)
+  - [x] Content context with full CRUD operations
+  - [x] Migration with both tables, indexes, and constraints
 - [ ] Create public-facing pages
   - [ ] Home/current biennale page (dark, dramatic design)
   - [ ] Archive page (past biennales 2013-2025)
@@ -21,10 +26,6 @@ Building a dark, artistic, experimental website for the Mykonos Biennale arts an
   - [ ] Admin dashboard with navigation
   - [ ] Biennale edition management (CRUD)
   - [ ] Event/program management (CRUD)
-- [ ] Database schemas and contexts
-  - [ ] Biennale schema (year, theme, statement, description, dates)
-  - [ ] Event schema (title, type, date, location, description, biennale_id)
-  - [ ] Generate migrations
 - [ ] Update router with all public and admin routes
 - [ ] Visit and verify functionality
 
