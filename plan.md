@@ -24,9 +24,12 @@ Building a dark, artistic, experimental website for the Mykonos Biennale arts an
   - [x] Archive teaser (2024, 2022, 2015, 2013)
   - [x] Dark dramatic design matching mockup
   - [x] Router updated with `/` route
+- [x] Create archive pages (Step 15 of 15 complete!)
+  - [x] Archive list page showing all biennales
+  - [x] Archive detail page showing specific year with full program
+  - [x] Events grouped by type (exhibitions, performances, etc)
+  - [x] Dynamic routing for /archive/:year
 - [ ] Create remaining public pages
-  - [ ] Archive page (list past biennales)
-  - [ ] Archive detail page (show specific year)
   - [ ] Program/events page (filter by type)
   - [ ] About page
 - [ ] Create admin backend
