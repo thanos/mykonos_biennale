@@ -15,7 +15,7 @@ alias MykonosBiennale.Accounts
 # Create default admin user
 
 # Create default admin user (idempotent)
-admin =
+_admin =
   case Accounts.get_user_by_email("admin@mykonosbiennale.com") do
     nil ->
       {:ok, user} =
