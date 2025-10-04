@@ -1,0 +1,41 @@
+# Mykonos Biennale - Development Plan
+
+## Overview
+Building a dark, artistic, experimental website for the Mykonos Biennale arts and short film festival with mobile-first design, admin backend, and Tailwind CSS.
+
+## Progress Tracker
+- [x] Generate Phoenix LiveView project `mykonos_biennale` with SQLite
+- [x] Create plan.md and start development server
+- [ ] Replace default home page with dark artistic static mockup
+- [ ] Set up authentication with `mix phx.gen.auth` for admin access
+- [ ] Create public-facing pages
+  - [ ] Home/current biennale page (dark, dramatic design)
+  - [ ] Archive page (past biennales 2013-2025)
+  - [ ] Program/events page (exhibitions, performances, video graffiti, dramatic nights)
+  - [ ] About page
+- [ ] Create admin backend
+  - [ ] Admin dashboard with navigation
+  - [ ] Biennale edition management (CRUD)
+  - [ ] Event/program management (CRUD)
+- [ ] Database schemas and contexts
+  - [ ] Biennale schema (year, theme, statement, description, dates)
+  - [ ] Event schema (title, type, date, location, description, biennale_id)
+  - [ ] Generate migrations
+- [ ] Update router with all public and admin routes
+- [ ] Match layouts to dark experimental design
+  - [ ] Update `app.css` with dark theme
+  - [ ] Update `root.html.heex` (force dark theme)
+  - [ ] Update `<Layouts.app>` component
+- [ ] Visit and verify functionality
+
+## Design Direction
+- **Dark theme** with dramatic typography
+- **Experimental aesthetic** - bold, artistic, mysterious
+- **Mobile-first** responsive design
+- Inspired by existing site: https://www.mykonosbiennale.com
+
+## Technical Stack
+- Phoenix 1.8 with LiveView
+- SQLite database
+- Tailwind CSS v4 + daisyUI
+- Authentication via phx.gen.auth
