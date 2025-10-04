@@ -308,14 +308,14 @@ defmodule MykonosBiennaleWeb.CoreComponents do
 
       <.modal id="confirm-modal">
         This is a modal.
-      </.modal>
+      </<.modal>
 
   JS commands may be passed to the `:on_cancel` to configure
   the closing/cancel event, for example:
 
       <.modal id="confirm" on_cancel={JS.navigate(~p"/posts")}>
         This is another modal.
-      </.modal>
+      </<.modal>
 
   """
   attr :id, :string, required: true
@@ -528,6 +528,7 @@ defmodule MykonosBiennaleWeb.CoreComponents do
     |> JS.hide(to: "##{id}", transition: {"block", "block", "hidden"})
     |> JS.remove_class("overflow-hidden", to: "body")
     |> JS.pop_focus()
+  end
 
   def hide(js \\ %JS{}, selector) do
     JS.hide(js,
@@ -537,6 +538,7 @@ defmodule MykonosBiennaleWeb.CoreComponents do
         {"transition-all ease-in duration-200", "opacity-100 translate-y-0 sm:scale-100",
          "opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"}
     )
+  end
 
   @doc """
   Translates an error message using gettext.
@@ -554,9 +556,12 @@ defmodule MykonosBiennaleWeb.CoreComponents do
     Enum.reduce(opts, msg, fn {key, value}, acc ->
       String.replace(acc, "%{#{key}}", fn _ -> to_string(value) end)
     end)
+  end
 
   @doc """
   Translates the errors for a field from a keyword list of errors.
   """
   def translate_errors(errors, field) when is_list(errors) do
     for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
+  end
+end
