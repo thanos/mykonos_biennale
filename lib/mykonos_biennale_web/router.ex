@@ -21,6 +21,7 @@ defmodule MykonosBiennaleWeb.Router do
     pipe_through :browser
 
     live "/", BiennaleLive
+    live "/archive", ArchiveLive
   end
 
   # Other scopes may use custom stacks.
