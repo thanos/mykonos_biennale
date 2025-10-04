@@ -17,6 +17,6 @@ alias MykonosBiennale.Accounts
   Accounts.register_user(%{email: "admin@mykonosbiennale.com", password: "adminpassword123"})
 
 {:ok, _admin, _expired_tokens} =
-  Accounts.update_user_password(admin, "adminpassword123", %{password: "adminpassword123"})
+  Accounts.update_user_password(admin, %{password: "adminpassword123"})
 
 IO.puts("✓ Created admin user: admin@mykonosbiennale.com / adminpassword123")
