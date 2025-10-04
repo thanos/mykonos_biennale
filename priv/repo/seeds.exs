@@ -13,10 +13,24 @@
 alias MykonosBiennale.Accounts
 
 # Create default admin user
-{:ok, admin} =
-  Accounts.register_user(%{email: "admin@mykonosbiennale.com", password: "adminpassword123"})
 
-{:ok, _admin, _expired_tokens} =
-  Accounts.update_user_password(admin, %{password: "adminpassword123"})
+# Create default admin user (idempotent)
+admin =
+  case Accounts.get_user_by_email("admin@mykonosbiennale.com") do
+    nil ->
+      {:ok, user} =
+        Accounts.register_user(%{
+          email: "admin@mykonosbiennale.com",
+          password: "adminpassword123"
+        })
 
-IO.puts("✓ Created admin user: admin@mykonosbiennale.com / adminpassword123")
+      {:ok, user, _expired_tokens} =
+        Accounts.update_user_password(user, %{password: "adminpassword123"})
+
+      user
+
+    user ->
+      user
+  end
+
+IO.puts("✓ Admin user ready: admin@mykonosbiennale.com / adminpassword123")
