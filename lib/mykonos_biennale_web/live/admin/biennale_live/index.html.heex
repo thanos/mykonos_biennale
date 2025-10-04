@@ -5,7 +5,10 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-8">
-            <.link navigate="/admin" class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+            <.link
+              navigate="/admin"
+              class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400"
+            >
               Admin
             </.link>
             <nav class="flex space-x-4">
@@ -15,7 +18,10 @@
               <.link navigate="/admin/biennales" class="text-white font-semibold">
                 Biennales
               </.link>
-              <.link navigate="/admin/events" class="text-gray-400 hover:text-white transition-colors">
+              <.link
+                navigate="/admin/events"
+                class="text-gray-400 hover:text-white transition-colors"
+              >
                 Events
               </.link>
             </nav>
@@ -26,8 +32,8 @@
         </div>
       </div>
     </div>
-
-    <!-- Main Content -->
+    
+<!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header with Create Button -->
       <div class="flex items-center justify-between mb-8">
@@ -39,8 +45,8 @@
           + New Biennale
         </.link>
       </div>
-
-      <!-- Biennales Table -->
+      
+<!-- Biennales Table -->
       <div class="bg-gray-800/30 backdrop-blur-sm rounded-lg border border-purple-500/20 overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-900/50 border-b border-purple-500/20">
@@ -53,7 +59,11 @@
             </tr>
           </thead>
           <tbody id="biennales" phx-update="stream" class="divide-y divide-gray-700/50">
-            <tr :for={{id, biennale} <- @streams.biennales} id={id} class="hover:bg-gray-700/20 transition-colors">
+            <tr
+              :for={{id, biennale} <- @streams.biennales}
+              id={id}
+              class="hover:bg-gray-700/20 transition-colors"
+            >
               <td class="px-6 py-4">
                 <span class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
                   {biennale.year}
@@ -67,11 +77,14 @@
               </td>
               <td class="px-6 py-4">
                 <div class="text-gray-300 text-sm">
-                  {if biennale.start_date && biennale.end_date do}
-                    {Calendar.strftime(biennale.start_date, "%b %d")} - {Calendar.strftime(biennale.end_date, "%b %d, %Y")}
-                  {else}
+                  <%= if biennale.start_date && biennale.end_date do %>
+                    {Calendar.strftime(biennale.start_date, "%b %d")} - {Calendar.strftime(
+                      biennale.end_date,
+                      "%b %d, %Y"
+                    )}
+                  <% else %>
                     <span class="text-gray-500">No dates set</span>
-                  {end}
+                  <% end %>
                 </div>
               </td>
               <td class="px-6 py-4">
@@ -81,7 +94,10 @@
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center justify-end space-x-2">
-                  <.link patch={"/admin/biennales/#{biennale.id}/edit"} class="text-purple-400 hover:text-purple-300 transition-colors">
+                  <.link
+                    patch={"/admin/biennales/#{biennale.id}/edit"}
+                    class="text-purple-400 hover:text-purple-300 transition-colors"
+                  >
                     Edit
                   </.link>
                   <button
@@ -101,7 +117,12 @@
     </div>
   </div>
 
-  <.modal :if={@live_action in [:new, :edit]} id="biennale-modal" show on_cancel={JS.patch("/admin/biennales")}>
+  <.modal
+    :if={@live_action in [:new, :edit]}
+    id="biennale-modal"
+    show
+    on_cancel={JS.patch("/admin/biennales")}
+  >
     <.live_component
       module={MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent}
       id={@biennale.id || :new}
@@ -112,4 +133,3 @@
     />
   </.modal>
 </Layouts.app>
-
