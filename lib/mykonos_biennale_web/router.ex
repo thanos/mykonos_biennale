@@ -22,6 +22,7 @@ defmodule MykonosBiennaleWeb.Router do
 
     live "/", BiennaleLive
     live "/archive", ArchiveLive
+    live "/archive/:year", ArchiveDetailLive
   end
 
   # Other scopes may use custom stacks.
