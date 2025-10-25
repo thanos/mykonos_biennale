@@ -24,7 +24,7 @@ _admin =
           password: "adminpassword123"
         })
 
-      {:ok, user, _expired_tokens} =
+      {:ok, {user, _expired_tokens}} =
         Accounts.update_user_password(user, %{password: "adminpassword123"})
 
       user
