@@ -1,0 +1,52 @@
+# Fly.io and Docker-specific files
+.dockerignore
+Dockerfile
+fly.toml
+
+# Git
+.git/
+.gitignore
+
+# Mix artifacts
+/_build/
+/deps/
+*.ez
+
+# Generate on crash by the VM
+erl_crash.dump
+
+# Static artifacts - these will be built in the Docker image
+/priv/static/
+
+# Development and test files
+/test/
+.elixir_ls/
+.formatter.exs
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Environment and secrets
+.env
+.env.*
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node modules (if any)
+node_modules/
+npm-debug.log
+
+# Logs
+*.log
+
