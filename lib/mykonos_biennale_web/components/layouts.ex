@@ -11,6 +11,8 @@ defmodule MykonosBiennaleWeb.Layouts do
   # and other static content.
   embed_templates "layouts/*"
 
+  def admin(assigns)
+
   @doc """
   Renders your app layout.
 
@@ -26,6 +28,7 @@ defmodule MykonosBiennaleWeb.Layouts do
 
   """
   attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :fluid?, :boolean, default: true, doc: "if the content uses full width"
 
   attr :current_scope, :map,
     default: nil,
