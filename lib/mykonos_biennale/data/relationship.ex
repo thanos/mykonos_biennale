@@ -19,6 +19,8 @@ defmodule MykonosBiennale.Data.Relationship do
 
   @doc false
   def changeset(relationship, attrs, _meta \\ []) do
+    attrs |> dbg()
+
     relationship
     |> cast(attrs, [:name, :slug, :fields, :subject_id, :object_id])
     |> validate_required([:name, :slug, :subject_id, :object_id])

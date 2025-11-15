@@ -1,4 +1,4 @@
-defmodule BackpexTV.Fields.InlineCRUD do
+defmodule BackpexTV.Fields.Map do
   @config_schema [
     type: [
       doc: "The type of the field.",
@@ -130,7 +130,7 @@ defmodule BackpexTV.Fields.InlineCRUD do
   end
 
   @impl Backpex.Field
-  def render_form(assigns) do
+  def render_formz(assigns) do
     assigns =
       assigns
       |> assign(:child_fields, assigns.field_options.child_fields)
@@ -220,8 +220,116 @@ defmodule BackpexTV.Fields.InlineCRUD do
   end
 
   @impl Backpex.Field
+  def render_form(assigns) do
+    assigns =
+      assigns
+      |> assign(:child_fields, assigns.field_options.child_fields)
+
+    ~H"""
+    <div>
+      <Layout.field_container>
+        <:label align={Backpex.Field.align_label(@field_options, assigns, :top)}>
+          <Layout.input_label
+            id={"inline-crud-label-#{@name}"}
+            as="span"
+            text={@field_options[:label]}
+          />
+        </:label>
+
+        <div class="flex flex-col">
+          <div class="m-10">
+            <h2 class="m-3text-lg font-bold">assigns |> Map.keys()</h2>
+            {inspect(assigns |> Map.keys())}
+          </div>
+          <div class="m-10">
+            <h2 class="m-3text-lg font-bold">assigns[:myself]</h2>
+            {inspect(assigns[:myself])}
+          </div>
+          <div class="m-10">
+            <h2 class="m-3text-lg font-bold">assigns[:child_fields]</h2>
+            {inspect(assigns[:child_fields])}
+          </div>
+          <div>
+            <div
+              :for={{child_field_name, child_field_options} <- @child_fields}
+              class={child_field_class(child_field_options, assigns)}
+            >
+              <div class="m-6">{inspect({child_field_name, child_field_options})}</div>
+              <span
+                id={"inline-crud-header-label-#{@name}-#{child_field_name}"}
+                class="mb-1 text-xs"
+              >
+                {child_field_options.label}
+              </span>
+              <BackpexForm.input
+                value=""
+                type={input_type(child_field_options) |> Atom.to_string()}
+                name={"#{@name}-#{child_field_name}"}
+                id={"inline-crud-header-label-#{@name}-#{child_field_name}"}
+                aria-labelledby={"inline-crud-header-label-#{@name}-#{child_field_name} inline-crud-label-#{@name}"}
+                phx-debounce={Backpex.Field.debounce(child_field_options, assigns)}
+                phx-throttle={Backpex.Field.throttle(child_field_options, assigns)}
+              />
+            </div>
+          </div>
+        </div>
+        <%= if help_text = Backpex.Field.help_text(@field_options, assigns) do %>
+          <Backpex.HTML.Form.help_text class="mt-1">{help_text}</Backpex.HTML.Form.help_text>
+        <% end %>
+      </Layout.field_container>
+    </div>
+    """
+  end
+
+  # @impl Backpex.Field
+  # def render_form(assigns) do
+  #   assigns =
+  #     assigns
+  #     |> assign(:child_fields, assigns.field_options.child_fields)
+
+  #   ~H"""
+  #   <div>
+  #     <Layout.field_container>
+  #       <:label align={Backpex.Field.align_label(@field_options, assigns, :top)}>
+  #         <Layout.input_label
+  #           id={"inline-crud-label-#{@name}"}
+  #           as="span"
+  #           text={@field_options[:label]}
+  #         />
+  #       </:label>
+
+  #       <div class="flex flex-col">
+  #         {inspect(@form[@name])}
+
+  #         <%= if @field_options.type in [:embed, :assoc] do %>
+  #           <input type="hidden" name={"change[#{@name}_delete][]"} />
+  #         <% end %>
+  #       </div>
+  #       <%= if @field_options.type in [:embed, :assoc] do %>
+  #         <input
+  #           name={"change[#{@name}_order][]"}
+  #           type="checkbox"
+  #           aria-label={Backpex.__("Add entry", @live_resource)}
+  #           class="btn btn-outline btn-sm btn-primary"
+  #         />
+  #       <% end %>
+  #       <%= if help_text = Backpex.Field.help_text(@field_options, assigns) do %>
+  #         <Backpex.HTML.Form.help_text class="mt-1">{help_text}</Backpex.HTML.Form.help_text>
+  #       <% end %>
+  #     </Layout.field_container>
+  #   </div>
+  #   """
+  # end
+
+  @impl Backpex.Field
   def association?({_name, %{type: :assoc}} = _field), do: true
   def association?({_name, %{type: _}} = _field), do: false
+
+  @impl Backpex.Field
+  def before_changeset(changeset, attrs, metadata, repo, field, assigns) do
+    dbg(attrs)
+    changeset
+  end
 
   @impl Backpex.Field
   def schema({name, _field_options}, schema) do
@@ -242,11 +350,4 @@ defmodule BackpexTV.Fields.InlineCRUD do
        do: input_type
 
   defp input_type(_child_field_options), do: :text
-
-  @impl Backpex.Field
-  def before_changeset(changeset, attrs, _metadata, repo, field, assigns) do
-    inspect(changeset)
-
-    changeset
-  end
 end
