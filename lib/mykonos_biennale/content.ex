@@ -34,7 +34,8 @@ defmodule MykonosBiennale.Content do
   def get_biennale_by_year(year) do
     Repo.one(
       from e in Entity,
-        where: e.type == "biennale" and fragment("? ->> ?", e.fields, "year") == ^to_string(year)
+        where:
+          e.type == "biennale" and fragment("CAST(? ->> ? AS INTEGER)", e.fields, "year") == ^year
     )
   end
 
