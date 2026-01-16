@@ -5,7 +5,7 @@ defmodule MykonosBiennale.Content do
 
   import Ecto.Query, warn: false
   alias MykonosBiennale.Repo
-  alias MykonosBiennale.Content.{Entity, Relationship}
+  alias MykonosBiennale.Content.{Entity, Relationship, Media}
 
   ## Backward-compatible helper functions for Biennales/Events
 
@@ -420,6 +420,52 @@ defmodule MykonosBiennale.Content do
   """
   def change_relationship(%Relationship{} = relationship, attrs \\ %{}) do
     Relationship.changeset(relationship, attrs)
+  end
+
+  ## Media
+
+  @doc """
+  Returns the list of media.
+  """
+  def list_media do
+    Repo.all(from m in Media, order_by: [desc: m.inserted_at])
+  end
+
+  @doc """
+  Gets a single media.
+  """
+  def get_media!(id), do: Repo.get!(Media, id)
+
+  @doc """
+  Creates a media.
+  """
+  def create_media(attrs \\ %{}) do
+    %Media{}
+    |> Media.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a media.
+  """
+  def update_media(%Media{} = media, attrs) do
+    media
+    |> Media.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a media.
+  """
+  def delete_media(%Media{} = media) do
+    Repo.delete(media)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking media changes.
+  """
+  def change_media(%Media{} = media, attrs \\ %{}) do
+    Media.changeset(media, attrs)
   end
 
   defp slugify(text) when is_binary(text) do
