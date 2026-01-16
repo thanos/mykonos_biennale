@@ -64,6 +64,9 @@ defmodule MykonosBiennaleWeb.Router do
       live "/admin/events", Admin.EventLive.Index, :index
       live "/admin/events/new", Admin.EventLive.Index, :new
       live "/admin/events/:id/edit", Admin.EventLive.Index, :edit
+      live "/admin/media", Admin.MediaLive.Index, :index
+      live "/admin/media/new", Admin.MediaLive.Index, :new
+      live "/admin/media/:id/edit", Admin.MediaLive.Index, :edit
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
     end
