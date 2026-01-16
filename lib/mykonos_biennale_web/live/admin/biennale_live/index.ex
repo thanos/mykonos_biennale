@@ -32,7 +32,7 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.Index do
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New Biennale")
-    |> assign(:biennale, %Biennale{})
+    |> assign(:biennale, %Content.Entity{type: "biennale", fields: %{}})
   end
 
   defp apply_action(socket, :index, _params) do
