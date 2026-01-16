@@ -1,7 +1,7 @@
 defmodule BackpexTV.Fields.InlineCRUD do
   @config_schema [
     type: [
-      doc: "The type of the field. One of `:embed`, `:embed_one`, `:assoc`, or `:map`.",
+      doc: "The type of the field.",
       type: {:in, [:embed, :assoc, :embed_one, :map]},
       required: true
     ],

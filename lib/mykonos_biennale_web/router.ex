@@ -37,6 +37,8 @@ defmodule MykonosBiennaleWeb.Router do
       live_resources "/relationships", Admin.RelationshipLive
 
       live_resources "/participants", Admin.ParticipantLive
+
+      live_resources "/art", Admin.ArtLive
     end
   end
 
