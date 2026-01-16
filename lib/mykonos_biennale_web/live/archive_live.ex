@@ -119,8 +119,8 @@ defmodule MykonosBiennaleWeb.ArchiveLive do
 
         <%= if @biennale.fields["start_date"] && @biennale.fields["end_date"] do %>
           <p class="text-xs text-gray-500 mt-4 uppercase tracking-wider">
-            {Calendar.strftime(@biennale.fields["start_date"], "%B %d")} – {Calendar.strftime(
-              @biennale.fields["end_date"],
+            {Calendar.strftime(Date.from_iso8601!(@biennale.fields["start_date"]), "%B %d")} – {Calendar.strftime(
+              Date.from_iso8601!(@biennale.fields["end_date"]),
               "%B %d, %Y"
             )}
           </p>
