@@ -195,7 +195,6 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
      |> assign(:available_media, available_media)
      |> put_flash(:info, "Media detached successfully")}
   end
-  end
 
   def handle_event("save", %{"biennale" => biennale_params}, socket) do
     save_biennale(socket, socket.assigns.action, biennale_params)
