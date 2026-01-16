@@ -93,7 +93,7 @@ defmodule MykonosBiennaleWeb.ArchiveLive do
   defp biennale_card(assigns) do
     ~H"""
     <.link
-      navigate={~p"/archive/#{@biennale.year}"}
+      navigate={~p"/archive/#{@biennale.fields["year"]}"}
       class="group block bg-gray-900 border border-gray-800 hover:border-gray-600 transition-all duration-300"
     >
       <div class="aspect-square bg-black relative overflow-hidden">
@@ -101,26 +101,26 @@ defmodule MykonosBiennaleWeb.ArchiveLive do
         </div>
         <div class="absolute inset-0 flex items-center justify-center">
           <span class="text-6xl md:text-7xl font-bold text-gray-600 group-hover:text-gray-400 transition-colors">
-            {@biennale.year}
+            {@biennale.fields["year"]}
           </span>
         </div>
       </div>
 
       <div class="p-6">
         <h3 class="text-2xl font-bold uppercase mb-2 group-hover:text-gray-300 transition-colors">
-          {@biennale.theme}
+          {@biennale.fields["theme"]}
         </h3>
 
-        <%= if @biennale.statement do %>
+        <%= if @biennale.fields["statement"] do %>
           <p class="text-gray-400 text-sm line-clamp-3">
-            {@biennale.statement}
+            {@biennale.fields["statement"]}
           </p>
         <% end %>
 
-        <%= if @biennale.start_date && @biennale.end_date do %>
+        <%= if @biennale.fields["start_date"] && @biennale.fields["end_date"] do %>
           <p class="text-xs text-gray-500 mt-4 uppercase tracking-wider">
-            {Calendar.strftime(@biennale.start_date, "%B %d")} – {Calendar.strftime(
-              @biennale.end_date,
+            {Calendar.strftime(@biennale.fields["start_date"], "%B %d")} – {Calendar.strftime(
+              @biennale.fields["end_date"],
               "%B %d, %Y"
             )}
           </p>
