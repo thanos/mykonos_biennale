@@ -5,7 +5,7 @@ defmodule MykonosBiennale.Content do
 
   import Ecto.Query, warn: false
   alias MykonosBiennale.Repo
-  alias MykonosBiennale.Content.{Biennale, Event}
+  alias MykonosBiennale.Content.{Biennale, Event, Entity, Relationship}
 
   @doc """
   Returns the list of biennales ordered by year descending.
@@ -219,10 +219,4 @@ defmodule MykonosBiennale.Content do
   ## Examples
 
       iex> change_event(event)
-      %Ecto.Changeset{data: %Event{}}
-
-  """
-  def change_event(%Event{} = event, attrs \\ %{}) do
-    Event.changeset(event, attrs)
-  end
-end
+      %E
