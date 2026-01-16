@@ -5,225 +5,310 @@ defmodule MykonosBiennale.Content do
 
   import Ecto.Query, warn: false
   alias MykonosBiennale.Repo
-  alias MykonosBiennale.Content.{Biennale, Event, Entity, Relationship}
+  alias MykonosBiennale.Content.{Entity, Relationship}
+
+  ## Backward-compatible helper functions for Biennales/Events
 
   @doc """
-  Returns the list of biennales ordered by year descending.
-
-  ## Examples
-
-      iex> list_biennales()
-      [%Biennale{}, ...]
-
+  Returns the list of biennales (entities with type "biennale") ordered by year descending.
   """
   def list_biennales do
-    Repo.all(from b in Biennale, order_by: [desc: b.year])
+    Repo.all(
+      from e in Entity,
+        where: e.type == "biennale",
+        order_by: [desc: fragment("CAST(? ->> ? AS INTEGER)", e.fields, "year")]
+    )
   end
 
   @doc """
-  Gets a single biennale.
+  Gets a single biennale entity by ID.
 
-  Raises `Ecto.NoResultsError` if the Biennale does not exist.
-
-  ## Examples
-
-      iex> get_biennale!(123)
-      %Biennale{}
-
-      iex> get_biennale!(456)
-      ** (Ecto.NoResultsError)
-
+  Raises `Ecto.NoResultsError` if the Entity does not exist.
   """
-  def get_biennale!(id), do: Repo.get!(Biennale, id)
+  def get_biennale!(id), do: Repo.get!(Entity, id)
 
   @doc """
-  Gets a biennale by year.
-
+  Gets a biennale entity by year.
   Returns `nil` if not found.
-
-  ## Examples
-
-      iex> get_biennale_by_year(2025)
-      %Biennale{}
-
-      iex> get_biennale_by_year(1999)
-      nil
-
   """
   def get_biennale_by_year(year) do
-    Repo.get_by(Biennale, year: year)
+    Repo.one(
+      from e in Entity,
+        where: e.type == "biennale" and fragment("? ->> ?", e.fields, "year") == ^to_string(year)
+    )
   end
 
   @doc """
-  Creates a biennale.
-
-  ## Examples
-
-      iex> create_biennale(%{field: value})
-      {:ok, %Biennale{}}
-
-      iex> create_biennale(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+  Creates a biennale entity.
   """
   def create_biennale(attrs \\ %{}) do
-    %Biennale{}
-    |> Biennale.changeset(attrs)
-    |> Repo.insert()
+    fields = %{
+      "year" => Map.get(attrs, :year) || Map.get(attrs, "year"),
+      "theme" => Map.get(attrs, :theme) || Map.get(attrs, "theme"),
+      "statement" => Map.get(attrs, :statement) || Map.get(attrs, "statement"),
+      "description" => Map.get(attrs, :description) || Map.get(attrs, "description"),
+      "start_date" => Map.get(attrs, :start_date) || Map.get(attrs, "start_date"),
+      "end_date" => Map.get(attrs, :end_date) || Map.get(attrs, "end_date")
+    }
+
+    year = fields["year"]
+
+    create_entity(%{
+      identity: to_string(year),
+      type: "biennale",
+      slug: to_string(year),
+      # Default to true, allow override
+      visible: Map.get(attrs, :visible, true),
+      fields: fields
+    })
   end
 
   @doc """
-  Updates a biennale.
-
-  ## Examples
-
-      iex> update_biennale(biennale, %{field: new_value})
-      {:ok, %Biennale{}}
-
-      iex> update_biennale(biennale, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+  Updates a biennale entity.
   """
-  def update_biennale(%Biennale{} = biennale, attrs) do
-    biennale
-    |> Biennale.changeset(attrs)
-    |> Repo.update()
+  def update_biennale(%Entity{} = biennale_entity, attrs) do
+    current_fields = biennale_entity.fields
+
+    new_fields =
+      Enum.reduce(
+        [:year, :theme, :statement, :description, :start_date, :end_date],
+        current_fields,
+        fn key, acc ->
+          case Map.get(attrs, key) do
+            nil -> acc
+            value -> Map.put(acc, to_string(key), value)
+          end
+        end
+      )
+
+    update_entity(biennale_entity, %{
+      identity: to_string(new_fields["year"]),
+      slug: to_string(new_fields["year"]),
+      visible: Map.get(attrs, :visible, biennale_entity.visible),
+      fields: new_fields
+    })
   end
 
   @doc """
-  Deletes a biennale.
-
-  ## Examples
-
-      iex> delete_biennale(biennale)
-      {:ok, %Biennale{}}
-
-      iex> delete_biennale(biennale)
-      {:error, %Ecto.Changeset{}}
-
+  Deletes a biennale entity and its associated relationships.
   """
-  def delete_biennale(%Biennale{} = biennale) do
-    Repo.delete(biennale)
+  def delete_biennale(%Entity{} = biennale_entity) do
+    # Delete associated relationships first where this biennale is the object
+    Repo.delete_all(from r in Relationship, where: r.object_id == ^biennale_entity.id)
+    # Then delete the biennale entity
+    delete_entity(biennale_entity)
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for tracking biennale changes.
-
-  ## Examples
-
-      iex> change_biennale(biennale)
-      %Ecto.Changeset{data: %Biennale{}}
-
+  Returns an `%Ecto.Changeset{}` for tracking biennale entity changes.
   """
-  def change_biennale(%Biennale{} = biennale, attrs \\ %{}) do
-    Biennale.changeset(biennale, attrs)
+  def change_biennale(%Entity{} = biennale_entity, attrs \\ %{}) do
+    # Map attrs to entity fields for the changeset
+    entity_attrs = %{
+      identity: Map.get(attrs, :year) && to_string(Map.get(attrs, :year)),
+      slug: Map.get(attrs, :year) && to_string(Map.get(attrs, :year)),
+      visible: Map.get(attrs, :visible),
+      fields:
+        Map.take(attrs, [:year, :theme, :statement, :description, :start_date, :end_date])
+        |> Enum.into(%{}, fn {k, v} -> {to_string(k), v} end)
+    }
+
+    Entity.changeset(biennale_entity, entity_attrs)
   end
 
   @doc """
-  Returns the list of events for a given biennale.
-
-  ## Examples
-
-      iex> list_events_for_biennale(biennale_id)
-      [%Event{}, ...]
-
+  Returns the list of events (entities with type "event") for a given biennale year.
+  Uses relationships to find events linked to the biennale.
   """
-  def list_events_for_biennale(biennale_id) do
-    Repo.all(from e in Event, where: e.biennale_id == ^biennale_id, order_by: [asc: e.date])
+  def list_events_for_biennale(biennale_year) do
+    biennale_entity = get_biennale_by_year(biennale_year)
+
+    if biennale_entity do
+      Repo.all(
+        from e in Entity,
+          join: r in assoc(e, :as_subject),
+          where:
+            e.type == "event" and r.object_id == ^biennale_entity.id and
+              r.slug == "biennale_event",
+          order_by: [asc: fragment("? ->> ?", e.fields, "date")]
+      )
+    else
+      []
+    end
   end
 
   @doc """
-  Returns the list of all events.
-
-  ## Examples
-
-      iex> list_events()
-      [%Event{}, ...]
-
+  Returns the list of all events (entities with type "event").
   """
   def list_events do
-    Repo.all(from e in Event, order_by: [asc: e.date])
+    Repo.all(
+      from e in Entity,
+        where: e.type == "event",
+        order_by: [asc: fragment("? ->> ?", e.fields, "date")]
+    )
   end
 
   @doc """
-  Gets a single event.
+  Gets a single event entity by ID.
 
-  Raises `Ecto.NoResultsError` if the Event does not exist.
-
-  ## Examples
-
-      iex> get_event!(123)
-      %Event{}
-
-      iex> get_event!(456)
-      ** (Ecto.NoResultsError)
-
+  Raises `Ecto.NoResultsError` if the Entity does not exist.
   """
-  def get_event!(id), do: Repo.get!(Event, id)
+  def get_event!(id), do: Repo.get!(Entity, id)
 
   @doc """
-  Creates an event.
-
-  ## Examples
-
-      iex> create_event(%{field: value})
-      {:ok, %Event{}}
-
-      iex> create_event(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+  Creates an event entity and links it to a biennale via relationship.
   """
   def create_event(attrs \\ %{}) do
-    %Event{}
-    |> Event.changeset(attrs)
-    |> Repo.insert()
+    title = Map.get(attrs, :title) || Map.get(attrs, "title")
+    # This is the entity ID of the biennale
+    biennale_entity_id = Map.get(attrs, :biennale_id) || Map.get(attrs, "biennale_id")
+
+    fields = %{
+      "title" => title,
+      "description" => Map.get(attrs, :description) || Map.get(attrs, "description"),
+      "type" => Map.get(attrs, :type) || Map.get(attrs, "type"),
+      "date" => Map.get(attrs, :date) || Map.get(attrs, "date"),
+      "time" => Map.get(attrs, :time) || Map.get(attrs, "time"),
+      "location" => Map.get(attrs, :location) || Map.get(attrs, "location"),
+      "tickets" => Map.get(attrs, :tickets) || Map.get(attrs, "tickets")
+    }
+
+    # Ensure slug is unique for events, can use UUID or title + current timestamp
+    slug = "#{slugify(title || "event")}-#{System.monotonic_time()}"
+
+    case create_entity(%{
+           identity: title,
+           type: "event",
+           slug: slug,
+           visible: Map.get(attrs, :visible, true),
+           fields: fields
+         }) do
+      {:ok, event_entity} ->
+        if biennale_entity_id do
+          case get_entity!(biennale_entity_id) do
+            %Entity{} = biennale_entity ->
+              create_relationship(%{
+                name: "belongs_to_biennale",
+                slug: "biennale_event",
+                fields: %{},
+                subject_id: event_entity.id,
+                object_id: biennale_entity.id
+              })
+
+              {:ok, event_entity}
+
+            _ ->
+              # If biennale entity not found, return event creation success
+              {:ok, event_entity}
+          end
+        else
+          {:ok, event_entity}
+        end
+
+      error ->
+        error
+    end
   end
 
   @doc """
-  Updates an event.
-
-  ## Examples
-
-      iex> update_event(event, %{field: new_value})
-      {:ok, %Event{}}
-
-      iex> update_event(event, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+  Updates an event entity and its relationship to a biennale.
   """
-  def update_event(%Event{} = event, attrs) do
-    event
-    |> Event.changeset(attrs)
-    |> Repo.update()
+  def update_event(%Entity{} = event_entity, attrs) do
+    current_fields = event_entity.fields
+
+    new_fields =
+      Enum.reduce(
+        [:title, :description, :type, :date, :time, :location, :tickets],
+        current_fields,
+        fn key, acc ->
+          case Map.get(attrs, key) do
+            nil -> acc
+            value -> Map.put(acc, to_string(key), value)
+          end
+        end
+      )
+
+    title = Map.get(attrs, :title) || new_fields["title"]
+    biennale_entity_id = Map.get(attrs, :biennale_id) || Map.get(attrs, "biennale_id")
+
+    updated_entity_changeset =
+      update_entity(event_entity, %{
+        identity: title,
+        visible: Map.get(attrs, :visible, event_entity.visible),
+        fields: new_fields
+      })
+
+    case updated_entity_changeset do
+      {:ok, updated_event_entity} ->
+        # Handle relationship update
+        if biennale_entity_id do
+          biennale_entity = get_entity!(biennale_entity_id)
+
+          case Repo.get_by(Relationship,
+                 subject_id: updated_event_entity.id,
+                 slug: "biennale_event"
+               ) do
+            %Relationship{} = relationship ->
+              # Update existing relationship if object_id is different
+              if relationship.object_id != biennale_entity.id do
+                update_relationship(relationship, %{object_id: biennale_entity.id})
+              else
+                {:ok, relationship}
+              end
+
+            _ ->
+              # Create new relationship if none exists
+              create_relationship(%{
+                name: "belongs_to_biennale",
+                slug: "biennale_event",
+                fields: %{},
+                subject_id: updated_event_entity.id,
+                object_id: biennale_entity.id
+              })
+          end
+        else
+          # If biennale_id is explicitly nil, remove any existing relationship
+          Repo.delete_all(
+            from r in Relationship,
+              where: r.subject_id == ^updated_event_entity.id and r.slug == "biennale_event"
+          )
+        end
+
+        {:ok, updated_event_entity}
+
+      error ->
+        error
+    end
   end
 
   @doc """
-  Deletes an event.
-
-  ## Examples
-
-      iex> delete_event(event)
-      {:ok, %Event{}}
-
-      iex> delete_event(event)
-      {:error, %Ecto.Changeset{}}
-
+  Deletes an event entity and its associated relationships.
   """
-  def delete_event(%Event{} = event) do
-    Repo.delete(event)
+  def delete_event(%Entity{} = event_entity) do
+    # Delete associated relationships first
+    Repo.delete_all(from r in Relationship, where: r.subject_id == ^event_entity.id)
+    # Then delete the event entity
+    delete_entity(event_entity)
   end
 
   @doc """
-  Returns an `%Ecto.Changeset{}` for tracking event changes.
-
-  ## Examples
-
-      iex> change_event(event)
-      %Ecto.Changeset{data: %Event{}}
-
+  Returns an `%Ecto.Changeset{}` for tracking event entity changes.
   """
-  def change_event(%Event{} = event, attrs \\ %{}) do
-    Event.changeset(event, attrs)
+  def change_event(%Entity{} = event_entity, attrs \\ %{}) do
+    # Map attrs to entity fields for the changeset
+    event_fields_to_map = [:title, :description, :type, :date, :time, :location, :tickets]
+
+    fields_map =
+      Map.take(attrs, event_fields_to_map)
+      |> Enum.into(%{}, fn {k, v} -> {to_string(k), v} end)
+
+    entity_attrs = %{
+      identity: Map.get(attrs, :title),
+      visible: Map.get(attrs, :visible),
+      fields: fields_map
+    }
+
+    Entity.changeset(event_entity, entity_attrs)
   end
 
   ## Entities
@@ -334,5 +419,14 @@ defmodule MykonosBiennale.Content do
   """
   def change_relationship(%Relationship{} = relationship, attrs \\ %{}) do
     Relationship.changeset(relationship, attrs)
+  end
+
+  defp slugify(text) when is_binary(text) do
+    text
+    |> String.downcase()
+    |> String.replace(~r/[^\w\s-]/, "")
+    |> String.replace(~r/\s+/, "-")
+    |> String.trim_leading("-")
+    |> String.trim_trailing("-")
   end
 end
