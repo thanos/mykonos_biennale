@@ -96,8 +96,8 @@ defmodule MykonosBiennaleWeb.ProgramLive do
 
               <%= if @biennale.fields["start_date"] && @biennale.fields["end_date"] do %>
                 <p class="text-lg text-gray-500 uppercase tracking-wider">
-                  {Calendar.strftime(@biennale.fields["start_date"], "%B %d")} – {Calendar.strftime(
-                    @biennale.fields["end_date"],
+                  {Calendar.strftime(Date.from_iso8601!(@biennale.fields["start_date"]), "%B %d")} – {Calendar.strftime(
+                    Date.from_iso8601!(@biennale.fields["end_date"]),
                     "%B %d, %Y"
                   )}
                 </p>
@@ -146,7 +146,10 @@ defmodule MykonosBiennaleWeb.ProgramLive do
                             <%= if event.fields["date"] do %>
                               <p class="text-sm text-gray-400 uppercase tracking-wider">
                                 <span class="text-gray-600">Date:</span>
-                                {Calendar.strftime(event.fields["date"], "%A, %B %d, %Y")}
+                                {Calendar.strftime(
+                                  Date.from_iso8601!(event.fields["date"]),
+                                  "%A, %B %d, %Y"
+                                )}
                               </p>
                             <% end %>
 
