@@ -12,6 +12,11 @@ defmodule MykonosBiennale.Content.Media do
     field :alt_text, :string
     field :metadata, :map
 
+    many_to_many(:entities, MykonosBiennale.Content.Entity,
+      join_through: "entity_media",
+      on_replace: :delete
+    )
+
     timestamps(type: :utc_datetime)
   end
 
