@@ -116,32 +116,21 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleIndexLive do
                         </p>
                       <% end %>
                     </div>
-                    <.dropdown>
-                      <:item>
-                        <.link
-                          navigate={~p"/admin/biennales/#{biennale.id}/edit"}
-                          class="flex items-center gap-2"
-                        >
-                          <.icon name="hero-pencil" class="size-4" /> Edit
-                        </.link>
-                      </:item>
-                      <:item>
-                        <.link
-                          phx-click={JS.dispatch("click", to: "#biennale-delete-#{biennale.id}")}
-                          phx-confirm="Are you sure you want to delete this biennale?"
-                          class="flex items-center gap-2 text-red-500"
-                        >
-                          <.icon name="hero-trash" class="size-4" /> Delete
-                        </.link>
-                        <button
-                          id={"biennale-delete-#{biennale.id}"}
-                          phx-click={JS.push("delete", value: %{id: biennale.id})}
-                          class="hidden"
-                        >
-                          Delete
-                        </button>
-                      </:item>
-                    </.dropdown>
+                    <div class="flex gap-2">
+                      <.link
+                        navigate={~p"/admin/biennales/#{biennale.id}/edit"}
+                        class="p-2 hover:bg-gray-800 rounded transition-colors"
+                      >
+                        <.icon name="hero-pencil" class="size-4 text-gray-400 hover:text-white" />
+                      </.link>
+                      <button
+                        phx-click={JS.push("delete", value: %{id: biennale.id})}
+                        phx-confirm="Are you sure you want to delete this biennale?"
+                        class="p-2 hover:bg-gray-800 rounded transition-colors"
+                      >
+                        <.icon name="hero-trash" class="size-4 text-red-400 hover:text-red-300" />
+                      </button>
+                    </div>
                   </div>
                   <p class="text-gray-400 text-sm">
                     {String.truncate(biennale.fields["description"] || "", 150)}
