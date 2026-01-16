@@ -479,21 +479,28 @@ defmodule MykonosBiennale.Content do
 
     # Check if association already exists
     existing =
-      Repo.get_by(Ecto.Assoc.join_through_schema(entity, :media),
-        entity_id: entity.id,
-        media_id: media.id
+      Repo.one(
+        from em in "entity_media",
+          where: em.entity_id == ^entity.id and em.media_id == ^media.id,
+          select: em
       )
 
     if existing do
       {:error, "Media already attached to this entity"}
     else
-      Repo.insert(%{
-        __struct__: Ecto.Assoc.join_through_schema(entity, :media),
-        entity_id: entity.id,
-        media_id: media.id,
-        position: position,
-        metadata: metadata
-      })
+      Repo.query!(
+        "INSERT INTO entity_media (entity_id, media_id, position, metadata, inserted_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6)",
+        [
+          entity.id,
+          media.id,
+          position,
+          Jason.encode!(metadata),
+          NaiveDateTime.utc_now(),
+          NaiveDateTime.utc_now()
+        ]
+      )
+
+      {:ok, :attached}
     end
   end
 
