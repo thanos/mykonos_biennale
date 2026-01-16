@@ -2,7 +2,6 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.Index do
   use MykonosBiennaleWeb, :live_view
 
   alias MykonosBiennale.Content
-  alias MykonosBiennale.Content.Biennale
 
   @impl true
   def mount(_params, _session, socket) do
