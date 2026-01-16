@@ -12,7 +12,7 @@ defmodule MykonosBiennaleWeb.Admin.MediaLive.FormComponent do
         <:subtitle>Upload an image/video, link to a URL, or embed HTML code</:subtitle>
       </.header>
 
-      <.simple_form
+      <.form
         for={@form}
         id="media-form"
         phx-target={@myself}
@@ -117,7 +117,7 @@ defmodule MykonosBiennaleWeb.Admin.MediaLive.FormComponent do
             Save Media
           </.button>
         </:actions>
-      </.simple_form>
+      </.form>
     </div>
     """
   end
