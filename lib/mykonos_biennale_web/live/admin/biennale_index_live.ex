@@ -133,7 +133,7 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleIndexLive do
                     </div>
                   </div>
                   <p class="text-gray-400 text-sm">
-                    {String.truncate(biennale.fields["description"] || "", 150)}
+                    {binary_slice(biennale.fields["description"] || "", 0, 150)}
                   </p>
                 </div>
               <% end %>
