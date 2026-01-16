@@ -182,22 +182,19 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
     biennale = socket.assigns.biennale
     media = Content.get_media!(media_id)
 
-    case Content.detach_media_from_entity(biennale, media) do
-      {:ok, :detached} ->
-        current_media = Content.list_media_for_entity(biennale)
-        all_media = Content.list_media()
-        attached_ids = Enum.map(current_media, & &1.id)
-        available_media = Enum.reject(all_media, fn m -> m.id in attached_ids end)
+    {:ok, :detached} = Content.detach_media_from_entity(biennale, media)
 
-        {:noreply,
-         socket
-         |> assign(:current_media, current_media)
-         |> assign(:available_media, available_media)
-         |> put_flash(:info, "Media detached successfully")}
+    current_media = Content.list_media_for_entity(biennale)
+    all_media = Content.list_media()
+    attached_ids = Enum.map(current_media, & &1.id)
+    available_media = Enum.reject(all_media, fn m -> m.id in attached_ids end)
 
-      {:error, reason} ->
-        {:noreply, put_flash(socket, :error, reason)}
-    end
+    {:noreply,
+     socket
+     |> assign(:current_media, current_media)
+     |> assign(:available_media, available_media)
+     |> put_flash(:info, "Media detached successfully")}
+  end
   end
 
   def handle_event("save", %{"biennale" => biennale_params}, socket) do
