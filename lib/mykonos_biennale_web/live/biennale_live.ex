@@ -6,11 +6,11 @@ defmodule MykonosBiennaleWeb.BiennaleLive do
   def mount(_params, _session, socket) do
     # Get the current/most recent biennale (2025)
     current_biennale = Content.get_biennale_by_year(2025) || create_default_biennale()
-    events = Content.list_events_for_biennale(current_biennale.id)
+    events = Content.list_events_for_biennale(current_biennale.fields["year"])
 
     {:ok,
      socket
-     |> assign(:page_title, "Mykonos Biennale #{current_biennale.year}")
+     |> assign(:page_title, "Mykonos Biennale #{current_biennale.fields["year"]}")
      |> assign(:biennale, current_biennale)
      |> assign(:events, events)
      |> assign(:events_by_type, group_events_by_type(events))}
@@ -38,7 +38,7 @@ defmodule MykonosBiennaleWeb.BiennaleLive do
   end
 
   defp group_events_by_type(events) do
-    Enum.group_by(events, & &1.type)
+    Enum.group_by(events, & &1.fields["type"])
   end
 
   @impl true
@@ -56,12 +56,12 @@ defmodule MykonosBiennaleWeb.BiennaleLive do
             </h1>
 
             <p class="text-xl md:text-2xl text-gray-400 font-light tracking-wider uppercase">
-              {@biennale.year} — {@biennale.theme}
+              {@biennale.fields["year"]} — {@biennale.fields["theme"]}
             </p>
 
             <div class="pt-8">
               <p class="text-lg md:text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">
-                {@biennale.statement}
+                {@biennale.fields["statement"]}
               </p>
             </div>
 
@@ -99,7 +99,7 @@ defmodule MykonosBiennaleWeb.BiennaleLive do
         <%!-- Program Preview Section --%>
         <div class="px-6 py-20 md:py-32 max-w-7xl mx-auto">
           <h2 class="text-4xl md:text-6xl font-bold uppercase mb-16 text-center">
-            Program {@biennale.year}
+            Program {@biennale.fields["year"]}
           </h2>
 
           <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -203,7 +203,7 @@ defmodule MykonosBiennaleWeb.BiennaleLive do
           <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
             <div class="text-center md:text-left">
               <p class="text-sm text-gray-400 uppercase tracking-wider">
-                Mykonos Biennale © {@biennale.year}
+                Mykonos Biennale © {@biennale.fields["year"]}
               </p>
             </div>
 
