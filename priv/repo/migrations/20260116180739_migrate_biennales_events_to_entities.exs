@@ -1,6 +1,5 @@
 defmodule MykonosBiennale.Repo.Migrations.MigrateBiennalesEventsToEntities do
   use Ecto.Migration
-  import Ecto.Query
 
   def up do
     # Migrate Biennales to Entities
@@ -14,12 +13,10 @@ defmodule MykonosBiennale.Repo.Migrations.MigrateBiennalesEventsToEntities do
       json_object(
         'year', year,
         'theme', theme,
+        'statement', statement,
         'description', description,
         'start_date', start_date,
-        'end_date', end_date,
-        'location', location,
-        'website', website,
-        'featured_image', featured_image
+        'end_date', end_date
       ),
       inserted_at,
       updated_at
@@ -37,12 +34,9 @@ defmodule MykonosBiennale.Repo.Migrations.MigrateBiennalesEventsToEntities do
       json_object(
         'title', title,
         'description', description,
-        'event_type', event_type,
+        'type', type,
         'date', date,
-        'time', time,
         'location', location,
-        'ticket_url', ticket_url,
-        'featured_image', featured_image,
         'old_event_id', id,
         'old_biennale_id', biennale_id
       ),
