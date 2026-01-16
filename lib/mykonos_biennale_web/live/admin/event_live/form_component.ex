@@ -42,12 +42,14 @@ defmodule MykonosBiennaleWeb.Admin.EventLive.FormComponent do
             type="select"
             label="Biennale"
             prompt="Choose a biennale"
-            options={Enum.map(@biennales, &{&1.year, &1.id})}
+            options={Enum.map(@biennales, &{&1.fields["year"], &1.id})}
             required
           />
 
           <.input field={@form[:date]} type="date" label="Date" />
+          <.input field={@form[:time]} type="time" label="Time" />
           <.input field={@form[:location]} type="text" label="Location" />
+          <.input field={@form[:tickets]} type="text" label="Tickets URL" />
           <.input field={@form[:description]} type="textarea" label="Description" rows="5" />
         </div>
 
