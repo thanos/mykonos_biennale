@@ -23,6 +23,12 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.Index do
     |> assign(:biennale, Content.get_biennale!(id))
   end
 
+  defp apply_action(socket, :show, %{"id" => id}) do
+    socket
+    |> assign(:page_title, "Show Biennale")
+    |> assign(:biennale, Content.get_biennale!(id))
+  end
+
   defp apply_action(socket, :new, _params) do
     socket
     |> assign(:page_title, "New Biennale")
