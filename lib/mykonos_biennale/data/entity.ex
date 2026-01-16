@@ -4,6 +4,7 @@ defmodule MykonosBiennale.Data.Entity do
 
   schema "entities" do
     field :identity, :string
+    field :type, :string
     field :slug, :string
     field :visible, :boolean, default: false
     field :fields, :map
@@ -16,7 +17,7 @@ defmodule MykonosBiennale.Data.Entity do
   @doc false
   def changeset(entity, attrs, _meta \\ []) do
     entity
-    |> cast(attrs, [:identity, :slug, :visible, :fields])
-    |> validate_required([:identity, :slug, :visible])
+    |> cast(attrs, [:identity, :type, :slug, :visible, :fields])
+    |> validate_required([:identity, :type, :slug, :visible])
   end
 end

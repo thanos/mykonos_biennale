@@ -1,10 +1,10 @@
-defmodule MykonosBiennaleWeb.Admin.ParticipantLive do
+defmodule MykonosBiennaleWeb.Admin.Participant2Live do
   use Backpex.LiveResource,
     adapter_config: [
-      schema: MykonosBiennale.Data.Entity,
+      schema: MykonosBiennale.Data.Participant,
       repo: MykonosBiennale.Repo,
-      update_changeset: &__MODULE__.changeset/3,
-      create_changeset: &__MODULE__.changeset/3,
+      update_changeset: &MykonosBiennale.Data.Participant.changeset/3,
+      create_changeset: &MykonosBiennale.Data.Participant.changeset/3,
       item_query: &__MODULE__.item_query/3
     ],
     layout: {MykonosBiennaleWeb.Layouts, :admin},
@@ -14,31 +14,18 @@ defmodule MykonosBiennaleWeb.Admin.ParticipantLive do
 
   import Ecto.Query, warn: false
 
-  alias MykonosBiennale.Data.Entity
-
-  # Added the item_query function to filter entities by type
-
-  #
-  def item_query(query, _view, _assigns) do
+  def item_query(query, :index, _assigns) do
     query
-    |> where([entity], entity.type == "participant")
-  end
-
-  #
-  # Added the changeset function to create a changeset for a person entity
-  #
-  def changeset(entity, params, metadata \\ []) do
-    entity
-    |> Entity.changeset(params |> Map.put("type", "participant"), metadata)
+    |> where([_entity], fragment("fields->>'type' = 'participant'"))
   end
 
   def item_query(query, _live_action, _assigns), do: query
 
   @impl Backpex.LiveResource
-  def singular_name, do: "Participant"
+  def singular_name, do: "Entity"
 
   @impl Backpex.LiveResource
-  def plural_name, do: "Participants"
+  def plural_name, do: "Entities"
 
   @impl Backpex.LiveResource
   def can?(_assigns, _action, _item), do: true
@@ -48,7 +35,7 @@ defmodule MykonosBiennaleWeb.Admin.ParticipantLive do
     [
       identity: %{
         module: Backpex.Fields.Text,
-        label: "Name",
+        label: "Identity",
         searchable: true,
         index_editable: true
       },
@@ -65,7 +52,7 @@ defmodule MykonosBiennaleWeb.Admin.ParticipantLive do
       fields: %{
         module: BackpexTV.Fields.InlineCRUD,
         label: "Fields",
-        type: :map,
+        type: :embed_one,
         except: [:index],
         child_fields: [
           phone: %{

@@ -42,7 +42,7 @@ defmodule MykonosBiennale.MixProject do
     [
       {:bcrypt_elixir, "~> 3.0"},
       {:igniter_js, "~> 0.4"},
-      {:backpex, "~> 0.15"},
+      {:backpex, "~> 0.16.3"},
       {:igniter, "~> 0.6", only: [:dev, :test]},
       {:phoenix, "~> 1.8.0"},
       {:phoenix_ecto, "~> 4.5"},
