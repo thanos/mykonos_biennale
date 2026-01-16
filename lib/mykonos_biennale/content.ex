@@ -477,9 +477,12 @@ defmodule MykonosBiennale.Content do
     position = Keyword.get(opts, :position, 0)
     metadata = Keyword.get(opts, :metadata, %{})
 
+    # Get the anonymous join schema module for the many_to_many association
+    join_schema_module = Ecto.Schema.__schema__(:association, :media, Entity).join_schema
+
     # Check if association already exists
     existing =
-      Repo.get_by(Ecto.Assoc.join_through_schema(entity, :media),
+      Repo.get_by(join_schema_module,
         entity_id: entity.id,
         media_id: media.id
       )
@@ -488,66 +491,5 @@ defmodule MykonosBiennale.Content do
       {:error, "Media already attached to this entity"}
     else
       Repo.insert(%{
-        __struct__: Ecto.Assoc.join_through_schema(entity, :media),
-        entity_id: entity.id,
-        media_id: media.id,
-        position: position,
-        metadata: metadata
-      })
-    end
-  end
-
-  @doc """
-  Detaches media from an entity.
-  """
-  def detach_media_from_entity(%Entity{} = entity, %Media{} = media) do
-    Repo.delete_all(
-      from em in "entity_media",
-        where: em.entity_id == ^entity.id and em.media_id == ^media.id
-    )
-
-    {:ok, :detached}
-  end
-
-  @doc """
-  Lists all media attached to an entity, ordered by position.
-  """
-  def list_media_for_entity(%Entity{id: entity_id}) do
-    Repo.all(
-      from m in Media,
-        join: em in "entity_media",
-        on: em.media_id == m.id,
-        where: em.entity_id == ^entity_id,
-        order_by: em.position,
-        select: m
-    )
-  end
-
-  @doc """
-  Reorders media for an entity based on a list of media IDs.
-  """
-  def reorder_entity_media(%Entity{id: entity_id}, media_ids) when is_list(media_ids) do
-    media_ids
-    |> Enum.with_index()
-    |> Enum.each(fn {media_id, position} ->
-      Repo.update_all(
-        from(em in "entity_media",
-          where: em.entity_id == ^entity_id and em.media_id == ^media_id
-        ),
-        set: [position: position]
-      )
-    end)
-
-    {:ok, :reordered}
-  end
-
-  # Helper function for slugification
-  defp slugify(text) when is_binary(text) do
-    text
-    |> String.downcase()
-    |> String.replace(~r/[^\w\s-]/, "")
-    |> String.replace(~r/\s+/, "-")
-    |> String.trim_leading("-")
-    |> String.trim_trailing("-")
-  end
-end
+        __struct__: join_schema_module,
+        entity
