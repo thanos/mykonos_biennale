@@ -28,6 +28,8 @@ defmodule MykonosBiennaleWeb.Router do
 
     backpex_routes()
 
+    get "/", RedirectController, :redirect_to_posts
+
     # add these lines
     live_session :default, on_mount: Backpex.InitAssigns do
       live_resources "/pages", Admin.PageLive
@@ -86,7 +88,6 @@ defmodule MykonosBiennaleWeb.Router do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
 
       # Backpex Admin Resources
-      live_resources "/admin/pages", Admin.PageLive
     end
 
     post "/users/update-password", UserSessionController, :update_password
