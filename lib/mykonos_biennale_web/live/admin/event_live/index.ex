@@ -2,7 +2,6 @@ defmodule MykonosBiennaleWeb.Admin.EventLive.Index do
   use MykonosBiennaleWeb, :live_view
 
   alias MykonosBiennale.Content
-  alias MykonosBiennale.Content.Event
 
   @impl true
   def mount(_params, _session, socket) do
@@ -24,9 +23,10 @@ defmodule MykonosBiennaleWeb.Admin.EventLive.Index do
   end
 
   defp apply_action(socket, :new, _params) do
+    # Create a new entity with type "event" instead of %Event{}
     socket
     |> assign(:page_title, "New Event")
-    |> assign(:event, %Event{})
+    |> assign(:event, %Content.Entity{type: "event", fields: %{}})
   end
 
   defp apply_action(socket, :index, _params) do
