@@ -30,6 +30,7 @@ defmodule MykonosBiennaleWeb.Admin.RelationshipLive do
   #     }
   #   ]
   # end
+  #
 
   @impl Backpex.LiveResource
   def fields do
@@ -60,13 +61,34 @@ defmodule MykonosBiennaleWeb.Admin.RelationshipLive do
         live_resource: MykonosBiennaleWeb.Admin.EntityLive,
         index_editable: true
       },
+      # fields: %{
+      #   module: Backpex.Fields.Textarea,
+      #   label: "Fields",
+      #   rows: 10,
+      #   except: [:index],
+      #   align_label: :center
+      # }
       fields: %{
-        module: Backpex.Fields.Textarea,
+        module: BackpexTV.Fields.Map,
         label: "Fields",
-        rows: 10,
+        type: :map,
         except: [:index],
-        align_label: :center
+        child_fields: [
+          phone: %{
+            module: Backpex.Fields.Text,
+            label: "Phone"
+          },
+          email: %{
+            module: Backpex.Fields.Text,
+            label: "Email"
+          }
+        ]
       }
     ]
+  end
+
+  def handle_event(event, params, socket) do
+    dbg({event, params})
+    {:noreply, socket}
   end
 end
