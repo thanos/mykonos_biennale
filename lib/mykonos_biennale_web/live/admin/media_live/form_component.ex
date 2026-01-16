@@ -109,14 +109,14 @@ defmodule MykonosBiennaleWeb.Admin.MediaLive.FormComponent do
 
         <.input field={@form[:alt_text]} type="text" label="Alt Text (for accessibility)" />
 
-        <:actions>
+        <div class="mt-6 flex items-center justify-end gap-x-6">
           <.button
             phx-disable-with="Saving..."
             class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
           >
             Save Media
           </.button>
-        </:actions>
+        </div>
       </.form>
     </div>
     """
