@@ -11,6 +11,12 @@ defmodule MykonosBiennale.Content.Entity do
 
     has_many(:as_subject, MykonosBiennale.Content.Relationship, foreign_key: :subject_id)
     has_many(:as_object, MykonosBiennale.Content.Relationship, foreign_key: :object_id)
+
+    many_to_many(:media, MykonosBiennale.Content.Media,
+      join_through: "entity_media",
+      on_replace: :delete
+    )
+
     timestamps(type: :utc_datetime)
   end
 
