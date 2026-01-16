@@ -11,8 +11,8 @@ defmodule MykonosBiennaleWeb.Admin.DashboardLive do
     total_biennales = length(biennales)
     total_events = length(all_events)
 
-    # Events by type
-    events_by_type = Enum.group_by(all_events, & &1.type)
+    # Events by type - now accessing from entity.fields
+    events_by_type = Enum.group_by(all_events, fn event -> event.fields["type"] end)
     event_type_counts = Enum.map(events_by_type, fn {type, events} -> {type, length(events)} end)
 
     # Recent biennales (last 3)
@@ -191,12 +191,12 @@ defmodule MykonosBiennaleWeb.Admin.DashboardLive do
                     <div class="flex items-center justify-between">
                       <div>
                         <h3 class="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
-                          {biennale.year} - {biennale.theme}
+                          {biennale.fields["year"]} - {biennale.fields["theme"]}
                         </h3>
-                        <%= if biennale.start_date && biennale.end_date do %>
+                        <%= if biennale.fields["start_date"] && biennale.fields["end_date"] do %>
                           <p class="text-sm text-gray-500 mt-1">
-                            {Calendar.strftime(biennale.start_date, "%B %d")} – {Calendar.strftime(
-                              biennale.end_date,
+                            {Calendar.strftime(biennale.fields["start_date"], "%B %d")} – {Calendar.strftime(
+                              biennale.fields["end_date"],
                               "%B %d, %Y"
                             )}
                           </p>
