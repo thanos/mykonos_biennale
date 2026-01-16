@@ -112,7 +112,7 @@ defmodule MykonosBiennale.Content do
   ## Examples
 
       iex> change_biennale(biennale)
-      %Ecto.Biennale{}}
+      %Ecto.Changeset{data: %Biennale{}}
 
   """
   def change_biennale(%Biennale{} = biennale, attrs \\ %{}) do
@@ -219,4 +219,120 @@ defmodule MykonosBiennale.Content do
   ## Examples
 
       iex> change_event(event)
-      %E
+      %Ecto.Changeset{data: %Event{}}
+
+  """
+  def change_event(%Event{} = event, attrs \\ %{}) do
+    Event.changeset(event, attrs)
+  end
+
+  ## Entities
+
+  @doc """
+  Returns the list of entities.
+  """
+  def list_entities do
+    Repo.all(from e in Entity, order_by: e.inserted_at)
+  end
+
+  @doc """
+  Returns the list of visible entities.
+  """
+  def list_visible_entities do
+    Repo.all(from e in Entity, where: e.visible == true, order_by: e.inserted_at)
+  end
+
+  @doc """
+  Gets a single entity.
+  """
+  def get_entity!(id) do
+    Repo.get!(Entity, id) |> Repo.preload([:as_subject, :as_object])
+  end
+
+  @doc """
+  Gets an entity by slug.
+  """
+  def get_entity_by_slug(slug) do
+    Repo.get_by(Entity, slug: slug) |> Repo.preload([:as_subject, :as_object])
+  end
+
+  @doc """
+  Creates an entity.
+  """
+  def create_entity(attrs \\ %{}) do
+    %Entity{}
+    |> Entity.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates an entity.
+  """
+  def update_entity(%Entity{} = entity, attrs) do
+    entity
+    |> Entity.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes an entity.
+  """
+  def delete_entity(%Entity{} = entity) do
+    Repo.delete(entity)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking entity changes.
+  """
+  def change_entity(%Entity{} = entity, attrs \\ %{}) do
+    Entity.changeset(entity, attrs)
+  end
+
+  ## Relationships
+
+  @doc """
+  Returns the list of relationships.
+  """
+  def list_relationships do
+    Repo.all(from r in Relationship, preload: [:subject, :object])
+  end
+
+  @doc """
+  Gets a single relationship.
+  """
+  def get_relationship!(id) do
+    Repo.get!(Relationship, id) |> Repo.preload([:subject, :object])
+  end
+
+  @doc """
+  Creates a relationship.
+  """
+  def create_relationship(attrs \\ %{}) do
+    %Relationship{}
+    |> Relationship.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a relationship.
+  """
+  def update_relationship(%Relationship{} = relationship, attrs) do
+    relationship
+    |> Relationship.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a relationship.
+  """
+  def delete_relationship(%Relationship{} = relationship) do
+    Repo.delete(relationship)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking relationship changes.
+  """
+  def change_relationship(%Relationship{} = relationship, attrs \\ %{}) do
+    Relationship.changeset(relationship, attrs)
+  end
+end
