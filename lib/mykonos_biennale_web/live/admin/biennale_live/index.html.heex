@@ -66,22 +66,22 @@
             >
               <td class="px-6 py-4">
                 <span class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  {biennale.year}
+                  {field(biennale, "year")}
                 </span>
               </td>
               <td class="px-6 py-4">
-                <div class="text-white font-medium">{biennale.theme}</div>
-                <div :if={biennale.statement} class="text-sm text-gray-400 mt-1 line-clamp-1">
-                  {biennale.statement}
+                <div class="text-white font-medium">{field(biennale, "theme")}</div>
+                <div
+                  :if={field(biennale, "statement")}
+                  class="text-sm text-gray-400 mt-1 line-clamp-1"
+                >
+                  {field(biennale, "statement")}
                 </div>
               </td>
               <td class="px-6 py-4">
                 <div class="text-gray-300 text-sm">
-                  <%= if biennale.start_date && biennale.end_date do %>
-                    {Calendar.strftime(biennale.start_date, "%b %d")} - {Calendar.strftime(
-                      biennale.end_date,
-                      "%b %d, %Y"
-                    )}
+                  <%= if format_biennale_date_range(biennale) do %>
+                    {format_biennale_date_range(biennale)}
                   <% else %>
                     <span class="text-gray-500">No dates set</span>
                   <% end %>
@@ -89,7 +89,7 @@
               </td>
               <td class="px-6 py-4">
                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-300">
-                  {length(biennale.events)} events
+                  {event_count(biennale)} events
                 </span>
               </td>
               <td class="px-6 py-4">

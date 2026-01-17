@@ -55,4 +55,48 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.Index do
 
     {:noreply, stream_delete(socket, :biennales, biennale)}
   end
+
+  # Template helpers (this LiveView renders `MykonosBiennale.Content.Entity` records where
+  # the domain fields live under `entity.fields` with string keys).
+  defp field(entity, key, default \\ nil)
+
+  defp field(%Content.Entity{fields: fields}, key, default) when is_map(fields) do
+    Map.get(fields, to_string(key), Map.get(fields, key, default))
+  end
+
+  defp field(%Content.Entity{}, _key, default), do: default
+
+  defp parse_date(%Date{} = date), do: {:ok, date}
+  defp parse_date(nil), do: :error
+
+  defp parse_date(date) when is_binary(date) do
+    case Date.from_iso8601(date) do
+      {:ok, d} -> {:ok, d}
+      _ -> :error
+    end
+  end
+
+  defp parse_date(_), do: :error
+
+  defp format_date(date, format) do
+    case parse_date(date) do
+      {:ok, d} -> Calendar.strftime(d, format)
+      :error -> nil
+    end
+  end
+
+  defp format_biennale_date_range(%Content.Entity{} = biennale) do
+    start_s = format_date(field(biennale, "start_date"), "%b %d")
+    end_s = format_date(field(biennale, "end_date"), "%b %d, %Y")
+
+    case {start_s, end_s} do
+      {nil, nil} -> nil
+      {nil, e} -> e
+      {s, nil} -> s
+      {s, e} -> "#{s} - #{e}"
+    end
+  end
+
+  # Placeholder until we want to show actual event counts without N+1 queries.
+  defp event_count(_biennale), do: 0
 end
