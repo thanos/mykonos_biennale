@@ -138,6 +138,9 @@ defmodule MykonosBiennaleWeb.BiennaleController do
     participants = Map.get(project_participants, entity.id, [])
     directors = Map.get(project_directors, entity.id, [])
 
+    participants = Map.get(project_participants, entity.id, [])
+    directors = Map.get(project_directors, entity.id, [])
+
     %{
       id: entity.id,
       title: entity.fields["title"],

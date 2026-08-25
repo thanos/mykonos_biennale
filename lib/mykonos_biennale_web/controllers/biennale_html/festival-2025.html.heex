@@ -193,10 +193,19 @@
             <%= if project.participants != [] do %>
               <p class="text-xs text-gray-600 mt-2">
                 <%= for {id, name} <- project.participants do %>
+                  <<<<<<<
+                    HEAD
+                    <a
+                    href={"/artist/#{id}"}
+                    class="hover:text-red-500 transition-colors"
+                  >
+                    {name}
+                  </<<<<<<>
+                  {unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · "} =======
                   <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">
                     {name}
                   </a>
-                  {unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · "}
+                  {unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · "} >>>>>>> 8320a23c79d2c93e1c0de1e22a205d851152b9b6
                 <% end %>
               </p>
             <% end %>
