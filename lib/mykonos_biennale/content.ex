@@ -556,7 +556,40 @@ defmodule MykonosBiennale.Content do
   def list_events_paginated(page \\ 1, per_page \\ 24, search \\ "", opts \\ []) do
     sort_by = Keyword.get(opts, :sort_by, :id)
     sort_dir = Keyword.get(opts, :sort_dir, :desc)
+    offset = (page - 1) * per_page
 
+    base_query = from(e in Entity, where: e.type == "event")
+
+    filtered_query =
+      if search != "" do
+        pattern = MykonosBiennale.Search.entity_search_pattern(search)
+
+        from(e in base_query,
+          where:
+            (not is_nil(e.search_index) and like(e.search_index, ^pattern)) or
+              like(e.identity, ^pattern)
+        )
+      else
+        base_query
+      end
+
+    if sort_by in [:biennale, :project] do
+      list_events_with_rel_sort(filtered_query, sort_by, sort_dir, page, per_page, offset)
+    else
+      order = entity_sort_clause("event", sort_by, sort_dir)
+      ordered_query = from(e in filtered_query, order_by: ^order)
+
+      items =
+        from(e in ordered_query, limit: ^per_page, offset: ^offset)
+        |> Repo.all()
+        |> preload_event_relationships()
+
+      total_count = filtered_query |> exclude(:order_by) |> Repo.aggregate(:count, :id)
+      {items, total_count}
+    end
+  end
+
+  defp list_events_with_rel_sort(filtered_query, sort_by, sort_dir, _page, per_page, offset) do
     rt_ids =
       from(rt in RelationshipType,
         where: rt.slug in ^["biennale_event", "event_festival", "event_project"],
@@ -569,29 +602,31 @@ defmodule MykonosBiennale.Content do
         preload: [:object, :relationship_type]
       )
 
-    base_query =
-      from(e in Entity, where: e.type == "event")
-
     all =
-      if search != "" do
-        pattern = MykonosBiennale.Search.entity_search_pattern(search)
-
-        from(e in base_query,
-          where:
-            (not is_nil(e.search_index) and like(e.search_index, ^pattern)) or
-              like(e.identity, ^pattern)
-        )
-      else
-        base_query
-      end
+      filtered_query
       |> Repo.all()
       |> Repo.preload(as_subject: rel_query)
 
     sorted = sort_events(all, sort_by, sort_dir)
     total_count = length(sorted)
-    offset = (page - 1) * per_page
     items = Enum.slice(sorted, offset, per_page)
     {items, total_count}
+  end
+
+  defp preload_event_relationships(events) do
+    rt_ids =
+      from(rt in RelationshipType,
+        where: rt.slug in ^["biennale_event", "event_festival", "event_project"],
+        select: rt.id
+      )
+
+    rel_query =
+      from(r in Relationship,
+        where: r.relationship_type_id in subquery(rt_ids),
+        preload: [:object, :relationship_type]
+      )
+
+    Repo.preload(events, as_subject: rel_query)
   end
 
   defp sort_events(events, :biennale, dir) do

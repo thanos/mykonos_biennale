@@ -59,13 +59,19 @@ defmodule MykonosBiennaleWeb.Admin.DashboardLive do
 
     biennales = Content.list_biennales()
 
-    all_events = Content.list_events()
-    participants = Content.list_participants()
-    artworks = Content.list_artworks()
-    total_media = length(Content.list_media())
+    total_events =
+      Repo.one(from e in Entity, where: e.type == "event", select: count(e.id))
+
+    total_participants =
+      Repo.one(from e in Entity, where: e.type == "participant", select: count(e.id))
+
+    total_artworks =
+      Repo.one(from e in Entity, where: e.type == "artwork", select: count(e.id))
 
     total_films =
       Repo.one(from e in Entity, where: e.type in ^@film_types, select: count(e.id))
+
+    total_media = Repo.one(from m in "media", select: count(m.id))
 
     cache_stats = Thumbnail.cache_stats()
 
@@ -75,9 +81,9 @@ defmodule MykonosBiennaleWeb.Admin.DashboardLive do
       |> assign(:biennales, biennales)
       |> assign(:biennale_filter, "all")
       |> assign(:total_biennales, length(biennales))
-      |> assign(:total_events, length(all_events))
-      |> assign(:total_participants, length(participants))
-      |> assign(:total_artworks, length(artworks))
+      |> assign(:total_events, total_events)
+      |> assign(:total_participants, total_participants)
+      |> assign(:total_artworks, total_artworks)
       |> assign(:total_films, total_films)
       |> assign(:total_media, total_media)
       |> assign(:type_labels, @type_labels)
@@ -116,188 +122,107 @@ defmodule MykonosBiennaleWeb.Admin.DashboardLive do
   end
 
   defp load_recent(socket) do
-    import Ecto.Query, warn: false
-
     filter = socket.assigns.biennale_filter
 
-    base_query =
-      from e in Entity,
-        where: e.type in ^@content_types and e.visible == true,
-        order_by: [desc: e.updated_at],
-        limit: 30
-
-    query =
+    scoped_clause =
       if filter && filter != "all" do
         biennale_id = String.to_integer(filter)
         scoped_ids = get_biennale_entity_ids(biennale_id)
 
-        from e in base_query,
-          where: e.id in ^scoped_ids
+        if scoped_ids == [] do
+          "AND 1=0"
+        else
+          "AND e.id IN (#{Enum.join(scoped_ids, ",")})"
+        end
       else
-        base_query
+        ""
       end
 
+    types_list =
+      @content_types
+      |> Enum.map(&"'#{&1}'")
+      |> Enum.join(",")
+
+    sql = """
+    SELECT e.id, e.identity, e.type, e.fields, e.updated_at, e.inserted_at,
+      COALESCE(
+        (SELECT string_agg(p.identity, ', ')
+         FROM relationships r
+         JOIN relationship_types rt ON rt.id = r.relationship_type_id
+         JOIN entities p ON p.id = r.object_id
+         WHERE r.subject_id = e.id
+           AND rt.slug IN ('artwork_participant', 'directed')
+           AND p.type = 'participant'),
+        ''
+      ) as creators,
+      COALESCE(
+        (SELECT string_agg(COALESCE(ev.fields->>'title', ev.identity), ', ')
+         FROM relationships r
+         JOIN relationship_types rt ON rt.id = r.relationship_type_id
+         JOIN entities ev ON ev.id = r.object_id
+         WHERE r.subject_id = e.id
+           AND rt.slug IN ('artwork_event', 'screened_at')
+           AND ev.type = 'event'),
+        ''
+      ) as events
+    FROM entities e
+    WHERE e.type IN (#{types_list})
+      AND e.visible = true
+      #{scoped_clause}
+    ORDER BY e.updated_at DESC
+    LIMIT 30
+    """
+
+    {:ok, result} = Repo.query(sql)
+
     recent =
-      Repo.all(query)
-      |> Enum.map(fn entity ->
+      Enum.map(result.rows, fn row ->
+        [id, identity, type, fields, updated_at, inserted_at, creators, events] = row
+
+        title = fields["title"] || fields["name"] || identity
+        subtitle = build_subtitle(type, title, fields, creators, events)
+
         %{
-          id: entity.id,
-          identity: entity.identity,
-          type: entity.type,
-          title: entity.fields["title"] || entity.fields["name"] || entity.identity,
-          fields: entity.fields,
-          inserted_at: entity.inserted_at,
-          updated_at: entity.updated_at,
-          is_new: entity.inserted_at == entity.updated_at
+          id: id,
+          type: type,
+          title: title,
+          subtitle: subtitle,
+          inserted_at: inserted_at,
+          updated_at: updated_at,
+          is_new: inserted_at == updated_at
         }
       end)
-
-    recent = enrich_with_context(recent)
 
     assign(socket, :recent, recent)
   end
 
-  defp enrich_with_context(recent) do
-    import Ecto.Query, warn: false
-
-    artwork_ids = for %{type: "artwork", id: id} <- recent, do: id
-    film_ids = for %{type: t, id: id} <- recent, t in @film_types, do: id
-    participant_ids = for %{type: "participant", id: id} <- recent, do: id
-
-    all_subject_ids = artwork_ids ++ film_ids ++ participant_ids
-    all_object_ids = artwork_ids ++ film_ids
-
-    ap_rt = Repo.get_by(RelationshipType, slug: "artwork_participant")
-    ae_rt = Repo.get_by(RelationshipType, slug: "artwork_event")
-    directed_rt = Repo.get_by(RelationshipType, slug: "directed")
-    screened_at_rt = Repo.get_by(RelationshipType, slug: "screened_at")
-
-    creator_names = load_creators(all_subject_ids, ap_rt, directed_rt)
-    event_names = load_events(all_object_ids, ae_rt, screened_at_rt)
-
-    Enum.map(recent, fn item ->
-      subtitle = build_subtitle(item, creator_names, event_names)
-      Map.put(item, :subtitle, subtitle)
-    end)
-  end
-
-  defp load_creators(ids, ap_rt, directed_rt) do
-    import Ecto.Query, warn: false
-
-    ap_ids = if ap_rt && ids != [], do: ids, else: []
-    directed_ids = if directed_rt && ids != [], do: ids, else: []
-
-    ap_rels =
-      if ap_ids != [] do
-        Repo.all(
-          from r in Relationship,
-            where: r.subject_id in ^ap_ids and r.relationship_type_id == ^ap_rt.id,
-            preload: [:object]
-        )
-      else
-        []
-      end
-
-    directed_rels =
-      if directed_ids != [] do
-        Repo.all(
-          from r in Relationship,
-            where: r.subject_id in ^directed_ids and r.relationship_type_id == ^directed_rt.id,
-            preload: [:object]
-        )
-      else
-        []
-      end
-
-    (ap_rels ++ directed_rels)
-    |> Enum.group_by(& &1.subject_id)
-    |> Enum.into(%{}, fn {id, rels} ->
-      names = rels |> Enum.map(& &1.object.identity) |> Enum.reject(&is_nil/1)
-      {id, names}
-    end)
-  end
-
-  defp load_events(ids, ae_rt, screened_at_rt) do
-    import Ecto.Query, warn: false
-
-    ae_ids = if ae_rt && ids != [], do: ids, else: []
-    sa_ids = if screened_at_rt && ids != [], do: ids, else: []
-
-    ae_rels =
-      if ae_ids != [] do
-        Repo.all(
-          from r in Relationship,
-            where: r.subject_id in ^ae_ids and r.relationship_type_id == ^ae_rt.id,
-            preload: [:object]
-        )
-      else
-        []
-      end
-
-    sa_rels =
-      if sa_ids != [] do
-        Repo.all(
-          from r in Relationship,
-            where: r.subject_id in ^sa_ids and r.relationship_type_id == ^screened_at_rt.id,
-            preload: [:object]
-        )
-      else
-        []
-      end
-
-    (ae_rels ++ sa_rels)
-    |> Enum.group_by(& &1.subject_id)
-    |> Enum.into(%{}, fn {id, rels} ->
-      titles =
-        rels
-        |> Enum.map(fn r -> r.object.fields["title"] || r.object.identity end)
-        |> Enum.reject(&is_nil/1)
-
-      {id, titles}
-    end)
-  end
-
-  defp build_subtitle(%{type: "artwork"} = item, creator_names, event_names) do
-    creators = Map.get(creator_names, item.id, [])
-    events = Map.get(event_names, item.id, [])
-
+  defp build_subtitle("artwork", _title, _fields, creators, events) do
     parts = []
-
-    parts =
-      if creators != [], do: parts ++ ["Artwork by #{Enum.join(creators, ", ")}"], else: parts
-
-    parts = if events != [], do: parts ++ ["in #{Enum.join(events, ", ")}"], else: parts
+    parts = if creators != "", do: parts ++ ["Artwork by #{creators}"], else: parts
+    parts = if events != "", do: parts ++ ["in #{events}"], else: parts
     Enum.join(parts, ", ")
   end
 
-  defp build_subtitle(%{type: type} = item, creator_names, event_names)
-       when type in @film_types do
-    creators = Map.get(creator_names, item.id, [])
-    events = Map.get(event_names, item.id, [])
-
+  defp build_subtitle(type, _title, _fields, creators, events) when type in @film_types do
     parts = []
-    parts = if creators != [], do: parts ++ ["#{Enum.join(creators, ", ")}"], else: parts
-    parts = if events != [], do: parts ++ ["in #{Enum.join(events, ", ")}"], else: parts
+    parts = if creators != "", do: parts ++ [creators], else: parts
+    parts = if events != "", do: parts ++ ["in #{events}"], else: parts
 
-    label =
-      if parts == [],
-        do: @type_labels[item.type] || item.type,
-        else: "#{@type_labels[item.type] || item.type} by #{Enum.join(parts, ", ")}"
-
-    label
+    if parts == [],
+      do: @type_labels[type] || type,
+      else: "#{@type_labels[type] || type} by #{Enum.join(parts, ", ")}"
   end
 
-  defp build_subtitle(%{type: "participant"} = item, _creator_names, event_names) do
-    events = Map.get(event_names, item.id, [])
-    if events != [], do: "in #{Enum.join(events, ", ")}", else: "Participant"
+  defp build_subtitle("participant", _title, _fields, _creators, events) do
+    if events != "", do: "in #{events}", else: "Participant"
   end
 
-  defp build_subtitle(%{type: "event"} = item, _creator_names, _event_names) do
-    item.fields["date"] || "Event"
+  defp build_subtitle("event", _title, fields, _creators, _events) do
+    fields["date"] || "Event"
   end
 
-  defp build_subtitle(item, _creator_names, _event_names) do
-    @type_labels[item.type] || item.type
+  defp build_subtitle(type, _title, _fields, _creators, _events) do
+    @type_labels[type] || type
   end
 
   defp get_biennale_entity_ids(biennale_id) do

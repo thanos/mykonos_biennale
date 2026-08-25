@@ -1,25 +1,75 @@
 defmodule MykonosBiennaleWeb.BiennaleController do
   use MykonosBiennaleWeb, :controller
 
+  import Ecto.Query, warn: false
+
+  alias MykonosBiennale.Repo
   alias MykonosBiennale.Content
+  alias MykonosBiennale.Content.{Entity, EntityMedia, Relationship, RelationshipType}
   alias MykonosBiennaleWeb.BiennaleHTML
 
   def show(conn, %{"slug" => slug}) do
     case Content.get_entity_by_slug(slug) do
       %{type: "biennale", visible: true} = biennale ->
-        projects = load_projects(biennale)
-        events = load_events(biennale)
+        rt = preload_relationship_types()
+
+        raw_projects = list_projects_for_biennale(biennale, rt)
+        raw_events = list_events_for_biennale(biennale, rt)
         biennales = Content.list_biennales()
+
+        all_entity_ids =
+          [biennale.id,
+           Enum.map(raw_projects, & &1.id),
+           Enum.map(raw_events, & &1.id),
+           Enum.map(biennales, & &1.id)]
+          |> List.flatten()
+          |> Enum.reject(&is_nil/1)
+
+        media_links_by_entity = batch_media_links(all_entity_ids)
+        media_by_entity = map_media_from_links(media_links_by_entity)
+
+        event_project_map = batch_event_project_ids(Enum.map(raw_events, & &1.id), rt)
+        project_event_ids = batch_project_event_ids(Enum.map(raw_projects, & &1.id), rt)
+
+        projects = Enum.map(raw_projects, &present_project(&1, media_by_entity, project_event_ids))
+        events = Enum.map(raw_events, &present_event(&1, media_by_entity, event_project_map))
+
+        project_event_map =
+          events
+          |> Enum.filter(& &1[:project_id])
+          |> Enum.into(%{}, fn event -> {event.project_id, event.id} end)
+
+        biennale_media = Map.get(media_by_entity, biennale.id, [])
+        biennale_links = Map.get(media_links_by_entity, biennale.id, [])
+
+        statement_bg_media = find_media_by_role(biennale_links, "statement_bg") || List.first(biennale_media)
+        program_bg_media = find_media_by_role(biennale_links, "program_bg") || Enum.at(biennale_media, 1)
+
+        biennale_media_map =
+          biennales
+          |> Enum.map(fn b -> {b.id, Map.get(media_by_entity, b.id, [])} end)
+          |> Enum.into(%{})
+
+        project_media =
+          raw_projects
+          |> Enum.map(fn p ->
+            media = Map.get(media_by_entity, p.id, [])
+            media = if media == [], do: fallback_project_media(p.id, project_event_ids, media_by_entity), else: media
+            {p.id, media}
+          end)
+          |> Enum.into(%{})
 
         conn
         |> assign(:biennale, biennale)
         |> assign(:projects, projects)
         |> assign(:events, events)
-        |> assign(:project_event_map, build_project_event_map(events))
-        |> assign(:biennale_media, Content.list_media_for_entity(biennale))
+        |> assign(:project_event_map, project_event_map)
+        |> assign(:biennale_media, biennale_media)
+        |> assign(:statement_bg_media, statement_bg_media)
+        |> assign(:program_bg_media, program_bg_media)
         |> assign(:biennales, biennales)
-        |> assign(:biennale_media_map, biennale_media_map(biennales))
-        |> assign(:project_media, project_media_map(projects))
+        |> assign(:biennale_media_map, biennale_media_map)
+        |> assign(:project_media, project_media)
         |> assign(
           :page_title,
           "#{biennale.fields["theme"]} — Mykonos Biennale #{biennale.fields["year"]}"
@@ -37,37 +87,48 @@ defmodule MykonosBiennaleWeb.BiennaleController do
     end
   end
 
-  defp load_events(biennale) do
-    year = parse_year(biennale.fields["year"])
-    Content.list_events_for_biennale(year) |> Enum.map(&present_event/1)
+  defp present_project(entity, media_by_entity, project_event_ids) do
+    media = Map.get(media_by_entity, entity.id, [])
+    media = if media == [], do: fallback_project_media(entity.id, project_event_ids, media_by_entity), else: media
+
+    %{
+      id: entity.id,
+      title: entity.fields["title"],
+      description: entity.fields["description"],
+      statement: entity.fields["statement"],
+      slug: entity.slug,
+      background_image: extract_background(media)
+    }
   end
 
-  defp load_projects(biennale) do
-    year = parse_year(biennale.fields["year"])
-    Content.list_projects_for_biennale(year) |> Enum.map(&present_project/1)
+  defp present_event(entity, media_by_entity, event_project_map) do
+    media = Map.get(media_by_entity, entity.id, [])
+
+    %{
+      id: entity.id,
+      title: entity.fields["title"],
+      type: entity.fields["type"],
+      date: entity.fields["date"],
+      time: entity.fields["time"],
+      location: entity.fields["location"],
+      description: entity.fields["description"],
+      slug: entity.slug,
+      background_image: extract_background(media),
+      project_id: Map.get(event_project_map, entity.id)
+    }
   end
 
-  defp biennale_media_map(biennales) do
-    biennales
-    |> Enum.map(fn b -> {b.id, Content.list_media_for_entity(b)} end)
-    |> Enum.into(%{})
-  end
+  defp extract_background(media) do
+    case List.last(media) do
+      %{source_type: "upload"} = m ->
+        MykonosBiennale.Uploads.media_url(m, size: "card")
 
-  defp project_media_map(projects) do
-    projects
-    |> Enum.map(fn project ->
-      entity = Content.get_entity!(project.id)
-      media = Content.list_media_for_entity(entity)
+      %{source_type: "url", source_url: url} when is_binary(url) ->
+        url
 
-      {project.id, if(media == [], do: Content.list_event_media_for_project(entity), else: media)}
-    end)
-    |> Enum.into(%{})
-  end
-
-  defp build_project_event_map(events) do
-    events
-    |> Enum.filter(& &1.project_id)
-    |> Enum.into(%{}, fn event -> {event.project_id, event.id} end)
+      _ ->
+        nil
+    end
   end
 
   def render_template(conn, %{template: "none"}) do
@@ -99,88 +160,112 @@ defmodule MykonosBiennaleWeb.BiennaleController do
     render(conn, :biennale)
   end
 
-  defp present_project(%MykonosBiennale.Content.Entity{} = entity) do
-    media = Content.list_media_for_entity(entity)
-    media = if media == [], do: Content.list_event_media_for_project(entity), else: media
+  # -- Batch helpers --
 
-    background =
-      case List.last(media) do
-        %{source_type: "upload"} = m ->
-          MykonosBiennale.Uploads.media_url(m, size: "card")
-
-        %{source_type: "url", source_url: url} when is_binary(url) ->
-          url
-
-        _ ->
-          nil
-      end
-
-    %{
-      id: entity.id,
-      title: entity.fields["title"],
-      description: entity.fields["description"],
-      statement: entity.fields["statement"],
-      slug: entity.slug,
-      background_image: background
-    }
+  defp preload_relationship_types do
+    slugs = ["biennale_event", "event_project"]
+    Repo.all(from rt in RelationshipType, where: rt.slug in ^slugs)
+    |> Enum.into(%{}, fn rt -> {rt.slug, rt} end)
   end
 
-  defp present_event(%MykonosBiennale.Content.Entity{} = entity) do
-    media = Content.list_media_for_entity(entity)
+  defp batch_media_links(entity_ids) when entity_ids == [], do: %{}
 
-    background =
-      case List.last(media) do
-        %{source_type: "upload"} = m ->
-          MykonosBiennale.Uploads.media_url(m, size: "card")
-
-        %{source_type: "url", source_url: url} when is_binary(url) ->
-          url
-
-        _ ->
-          nil
-      end
-
-    project_id = get_event_project_id(entity)
-
-    %{
-      id: entity.id,
-      title: entity.fields["title"],
-      type: entity.fields["type"],
-      date: entity.fields["date"],
-      time: entity.fields["time"],
-      location: entity.fields["location"],
-      description: entity.fields["description"],
-      slug: entity.slug,
-      background_image: background,
-      project_id: project_id
-    }
-  end
-
-  defp get_event_project_id(event) do
-    import Ecto.Query
-    alias MykonosBiennale.Repo
-    alias MykonosBiennale.Content.{Relationship, RelationshipType}
-
-    rt = Repo.get_by(RelationshipType, slug: "event_project")
-
-    if rt do
-      Repo.one(
-        from r in Relationship,
-          where: r.subject_id == ^event.id and r.relationship_type_id == ^rt.id,
-          select: r.object_id
+  defp batch_media_links(entity_ids) do
+    records =
+      Repo.all(
+        from em in EntityMedia,
+          where: em.entity_id in ^entity_ids,
+          order_by: [asc: em.entity_id, asc: em.position],
+          preload: [:media]
       )
+
+    Enum.group_by(records, & &1.entity_id)
+  end
+
+  defp map_media_from_links(links_by_entity) do
+    Map.new(links_by_entity, fn {id, links} -> {id, Enum.map(links, & &1.media)} end)
+  end
+
+  defp find_media_by_role(links, role) do
+    Enum.find_value(links, fn link ->
+      if link.metadata && link.metadata["role"] == role, do: link.media
+    end)
+  end
+
+  defp batch_event_project_ids(event_ids, _rt) when event_ids == [], do: %{}
+
+  defp batch_event_project_ids(event_ids, rt) do
+    ep_rt = Map.get(rt, "event_project")
+
+    if ep_rt do
+      Repo.all(
+        from r in Relationship,
+          where: r.subject_id in ^event_ids and r.relationship_type_id == ^ep_rt.id,
+          select: {r.subject_id, r.object_id}
+      )
+      |> Enum.into(%{})
     else
-      nil
+      %{}
     end
   end
 
-  defp parse_year(nil), do: nil
-  defp parse_year(y) when is_integer(y), do: y
+  defp batch_project_event_ids(project_ids, _rt) when project_ids == [], do: %{}
 
-  defp parse_year(y) when is_binary(y) do
-    case Integer.parse(y) do
-      {n, _} -> n
-      :error -> nil
+  defp batch_project_event_ids(project_ids, rt) do
+    ep_rt = Map.get(rt, "event_project")
+
+    if ep_rt do
+      Repo.all(
+        from r in Relationship,
+          where: r.object_id in ^project_ids and r.relationship_type_id == ^ep_rt.id,
+          select: {r.object_id, r.subject_id}
+      )
+      |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    else
+      %{}
+    end
+  end
+
+  defp fallback_project_media(project_id, project_event_ids, media_by_entity) do
+    event_ids = Map.get(project_event_ids, project_id, [])
+    Enum.flat_map(event_ids, fn eid -> Map.get(media_by_entity, eid, []) end)
+  end
+
+  # -- Biennale-scoped queries --
+
+  defp list_projects_for_biennale(biennale, rt) do
+    be_rt = Map.get(rt, "biennale_event")
+    ep_rt = Map.get(rt, "event_project")
+
+    if be_rt && ep_rt do
+      Repo.all(
+        from p in Entity,
+          join: ep in Relationship,
+          on: ep.relationship_type_id == ^ep_rt.id and ep.object_id == p.id,
+          join: be in Relationship,
+          on: be.relationship_type_id == ^be_rt.id and be.subject_id == ep.subject_id,
+          where: p.type == "project" and be.object_id == ^biennale.id,
+          distinct: p.id,
+          order_by: [asc: p.identity]
+      )
+    else
+      []
+    end
+  end
+
+  defp list_events_for_biennale(biennale, rt) do
+    be_rt = Map.get(rt, "biennale_event")
+
+    if be_rt do
+      Repo.all(
+        from e in Entity,
+          join: r in Relationship,
+          on: r.subject_id == e.id,
+          where: e.type == "event" and r.object_id == ^biennale.id and r.relationship_type_id == ^be_rt.id,
+          order_by: [desc: e.inserted_at]
+      )
+    else
+      []
     end
   end
 
