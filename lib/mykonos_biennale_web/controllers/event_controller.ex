@@ -46,10 +46,14 @@ defmodule MykonosBiennaleWeb.EventController do
     # Single query each for biennale and project entities
     {biennale, project} =
       case [biennale_id, project_id] |> Enum.reject(&is_nil/1) do
-        [] -> {nil, nil}
+        [] ->
+          {nil, nil}
+
         ids ->
           entities = Repo.all(from e in Entity, where: e.id in ^ids)
-          {Enum.find(entities, &(&1.id == biennale_id)), Enum.find(entities, &(&1.id == project_id))}
+
+          {Enum.find(entities, &(&1.id == biennale_id)),
+           Enum.find(entities, &(&1.id == project_id))}
       end
 
     poster = get_poster(event)
@@ -100,7 +104,13 @@ defmodule MykonosBiennaleWeb.EventController do
   end
 
   defp preload_relationship_types do
-    slugs = ["biennale_event", "event_project", "artwork_event", "screened_at", "artwork_participant"]
+    slugs = [
+      "biennale_event",
+      "event_project",
+      "artwork_event",
+      "screened_at",
+      "artwork_participant"
+    ]
 
     Repo.all(from rt in RelationshipType, where: rt.slug in ^slugs)
     |> Enum.into(%{}, fn rt -> {rt.slug, rt} end)
@@ -121,8 +131,11 @@ defmodule MykonosBiennaleWeb.EventController do
             select: {r.relationship_type_id, r.object_id}
         )
 
-      biennale_id = Enum.find_value(rows, fn {rt_id, oid} -> if be_rt && rt_id == be_rt.id, do: oid end)
-      project_id = Enum.find_value(rows, fn {rt_id, oid} -> if ep_rt && rt_id == ep_rt.id, do: oid end)
+      biennale_id =
+        Enum.find_value(rows, fn {rt_id, oid} -> if be_rt && rt_id == be_rt.id, do: oid end)
+
+      project_id =
+        Enum.find_value(rows, fn {rt_id, oid} -> if ep_rt && rt_id == ep_rt.id, do: oid end)
 
       {biennale_id, project_id}
     end
@@ -186,7 +199,9 @@ defmodule MykonosBiennaleWeb.EventController do
           Repo.all(
             from e in Entity,
               where: e.id in ^artwork_ids and e.visible == true,
-              order_by: [asc: fragment("lower(coalesce(? ->> ?, ?))", e.fields, "title", e.identity)]
+              order_by: [
+                asc: fragment("lower(coalesce(? ->> ?, ?))", e.fields, "title", e.identity)
+              ]
           )
 
         media_by_id = batch_media(artwork_ids)
@@ -224,7 +239,9 @@ defmodule MykonosBiennaleWeb.EventController do
           Repo.all(
             from e in Entity,
               where: e.id in ^film_ids and e.visible == true,
-              order_by: [asc: fragment("lower(coalesce(? ->> ?, ?))", e.fields, "title", e.identity)]
+              order_by: [
+                asc: fragment("lower(coalesce(? ->> ?, ?))", e.fields, "title", e.identity)
+              ]
           )
 
         media_by_id = batch_media(film_ids)
@@ -286,7 +303,12 @@ defmodule MykonosBiennaleWeb.EventController do
         from em in EntityMedia,
           where: em.entity_id in ^entity_ids,
           order_by: [
-            asc: fragment("CASE WHEN ? ->> 'is_poster' = 'true' OR ? ->> 'role' = 'poster' THEN 0 ELSE 1 END", em.metadata, em.metadata),
+            asc:
+              fragment(
+                "CASE WHEN ? ->> 'is_poster' = 'true' OR ? ->> 'role' = 'poster' THEN 0 ELSE 1 END",
+                em.metadata,
+                em.metadata
+              ),
             asc: em.position
           ],
           preload: [:media]

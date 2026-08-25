@@ -120,7 +120,9 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
           <button
             type="button"
             phx-click="remove_bg"
-            phx-value-role={if @label == "Statement Background", do: "statement_bg", else: "program_bg"}
+            phx-value-role={
+              if @label == "Statement Background", do: "statement_bg", else: "program_bg"
+            }
             phx-target={@myself}
             class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >
@@ -183,24 +185,24 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
     program_bg = find_media_by_role(media_links, "program_bg")
 
     {:ok,
-      socket
-      |> assign(assigns)
-      |> assign(:statement_bg, statement_bg)
-      |> assign(:program_bg, program_bg)
-      |> assign_new(:form, fn ->
-        changeset = BiennaleForm.changeset(%BiennaleForm{}, biennale_form_attrs(biennale))
-        to_form(changeset, as: :biennale)
-      end)
-      |> allow_upload(:statement_bg,
-        accept: ~w(.jpg .jpeg .png .webp),
-        max_entries: 1,
-        max_file_size: 10_000_000
-      )
-      |> allow_upload(:program_bg,
-        accept: ~w(.jpg .jpeg .png .webp),
-        max_entries: 1,
-        max_file_size: 10_000_000
-      )}
+     socket
+     |> assign(assigns)
+     |> assign(:statement_bg, statement_bg)
+     |> assign(:program_bg, program_bg)
+     |> assign_new(:form, fn ->
+       changeset = BiennaleForm.changeset(%BiennaleForm{}, biennale_form_attrs(biennale))
+       to_form(changeset, as: :biennale)
+     end)
+     |> allow_upload(:statement_bg,
+       accept: ~w(.jpg .jpeg .png .webp),
+       max_entries: 1,
+       max_file_size: 10_000_000
+     )
+     |> allow_upload(:program_bg,
+       accept: ~w(.jpg .jpeg .png .webp),
+       max_entries: 1,
+       max_file_size: 10_000_000
+     )}
   end
 
   @impl true
@@ -223,7 +225,10 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
     biennale = socket.assigns.biennale
 
     if biennale.id do
-      media = if role == "statement_bg", do: socket.assigns.statement_bg, else: socket.assigns.program_bg
+      media =
+        if role == "statement_bg",
+          do: socket.assigns.statement_bg,
+          else: socket.assigns.program_bg
 
       if media do
         Content.detach_media_from_entity(biennale, media)
