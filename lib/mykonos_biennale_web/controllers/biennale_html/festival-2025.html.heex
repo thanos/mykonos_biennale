@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-black text-white">
+<div class="min-h-screen bg-neutral-900 text-white">
   <%!-- Hero / Statement Section --%>
   <div
     :if={@statement_bg_media}
@@ -180,6 +180,23 @@
                 {project.description}
               </p>
             <% end %>
+            <%= if project.participants != [] do %>
+              <p class="text-xs text-gray-600 mt-2">
+                <%= for {id, name} <- project.participants do %>
+                  <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">{name}</a>
+                  <%= unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · " %>
+                <% end %>
+              </p>
+            <% end %>
+            <%= if project.directors != [] do %>
+              <p class="text-xs text-gray-600 mt-1">
+                Dir.
+                <%= for {id, name} <- project.directors do %>
+                  <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">{name}</a>
+                  <%= unless id == List.last(Enum.map(project.directors, &elem(&1, 0))), do: " · " %>
+                <% end %>
+              </p>
+            <% end %>
           </div>
         <% end %>
       </div>
@@ -187,7 +204,7 @@
   <% end %>
 
   <%!-- Archive Teaser Section --%>
-  <div class="px-6 py-20 md:py-32 bg-gray-950">
+  <div class="px-6 py-20 md:py-32 bg-neutral-900">
     <div class="max-w-7xl mx-auto">
       <h2 class="text-4xl md:text-6xl font-bold uppercase mb-16 text-center">
         Archive

@@ -102,6 +102,14 @@
               <%= if event.description do %>
                 <p class="text-sm leading-relaxed text-gray-600 mb-4">{event.description}</p>
               <% end %>
+              <%= if event.participants != [] do %>
+                <p class="text-xs text-gray-500 mb-2">
+                  <%= for {id, name} <- event.participants do %>
+                    <a href={"/artist/#{id}"} class="hover:text-[#f2ba49] transition-colors">{name}</a>
+                    <%= unless id == List.last(Enum.map(event.participants, &elem(&1, 0))), do: " · " %>
+                  <% end %>
+                </p>
+              <% end %>
               <a
                 href={"/biennale/#{event.slug}"}
                 class="text-xs font-bold uppercase text-[#f2ba49] hover:underline"
@@ -111,6 +119,69 @@
             </div>
           </div>
         <% end %>
+      </div>
+    <% end %>
+
+    <%!-- Projects Section --%>
+    <%= if @projects != [] do %>
+      <div class="bg-[#222] py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+          <h2 class="text-3xl font-bold uppercase mb-12 text-center text-gray-300">
+            Projects {@biennale.fields["year"]}
+          </h2>
+          <div class="flex flex-wrap justify-center gap-8">
+            <%= for project <- @projects do %>
+              <% media_list = Map.get(@project_media, project.id, [])
+              first_media = List.first(media_list)
+              bg_style =
+                if first_media do
+                  "background-image: url('" <>
+                    MykonosBiennale.Uploads.media_url(first_media, size: :card) <>
+                    "'); background-size: cover; background-position: center;"
+                else
+                  ""
+                end %>
+              <div class="group cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.375rem)]">
+                <div class="aspect-square bg-gray-800 mb-4 relative overflow-hidden">
+                  <%= if first_media do %>
+                    <div class="absolute inset-0 group-hover:scale-105 transition-transform duration-500" style={bg_style}></div>
+                  <% else %>
+                    <div class="absolute inset-0 bg-gradient-to-br from-gray-700 to-black group-hover:scale-105 transition-transform duration-500"></div>
+                  <% end %>
+                </div>
+                <h3 class="text-xl font-bold uppercase mb-2">
+                  <%= if event_id = Map.get(@project_event_map, project.id) do %>
+                    <a href={"/event/#{event_id}"} class="hover:text-[#f2ba49] transition-colors">
+                      {project.title}
+                    </a>
+                  <% else %>
+                    {project.title}
+                  <% end %>
+                </h3>
+                <%= if project.description do %>
+                  <p class="text-gray-500 text-sm line-clamp-2">{project.description}</p>
+                <% end %>
+                <%= if project.participants != [] do %>
+                  <p class="text-xs text-gray-600 mt-2">
+                    <%= for {id, name} <- project.participants do %>
+                      <a href={"/artist/#{id}"} class="hover:text-[#f2ba49] transition-colors">{name}</a>
+                      <%= unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · " %>
+                    <% end %>
+                  </p>
+                <% end %>
+                <%= if project.directors != [] do %>
+                  <p class="text-xs text-gray-600 mt-1">
+                    Dir.
+                    <%= for {id, name} <- project.directors do %>
+                      <a href={"/artist/#{id}"} class="hover:text-[#f2ba49] transition-colors">{name}</a>
+                      <%= unless id == List.last(Enum.map(project.directors, &elem(&1, 0))), do: " · " %>
+                    <% end %>
+                  </p>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
       </div>
     <% end %>
 
