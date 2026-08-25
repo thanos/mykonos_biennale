@@ -369,7 +369,7 @@ defmodule MykonosBiennale.Search do
   defp entity_url(%Entity{type: "artwork"} = entity), do: "/art/#{entity.id}"
   defp entity_url(%Entity{type: "event"} = entity), do: "/event/#{entity.id}"
   defp entity_url(%Entity{type: "participant"} = entity), do: "/artist/#{entity.id}"
-  defp entity_url(%Entity{type: type} = entity) when type in @film_types, do: "/art/#{entity.id}"
+  defp entity_url(%Entity{type: type} = entity) when type in @film_types, do: "/film/#{entity.id}"
   defp entity_url(_), do: "/archive"
 
   # =====================================================================

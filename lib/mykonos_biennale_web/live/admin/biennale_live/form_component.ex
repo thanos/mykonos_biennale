@@ -2,7 +2,6 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
   use MykonosBiennaleWeb, :live_component
 
   alias MykonosBiennale.Content
-  alias MykonosBiennale.Content.Media
   alias MykonosBiennaleWeb.BiennaleHTML
   alias Ecto.Changeset
 
@@ -74,6 +73,26 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
           <.input field={@form[:show_program]} type="checkbox" label="Show program" />
         </div>
 
+        <hr class="my-6 border-gray-200" />
+
+        <h3 class="text-sm font-semibold text-gray-900 mb-3">Background Images</h3>
+
+        <div class="space-y-6">
+          <.image_upload
+            label="Statement Background"
+            image={@statement_bg}
+            upload={@uploads.statement_bg}
+            myself={@myself}
+          />
+
+          <.image_upload
+            label="Program Background"
+            image={@program_bg}
+            upload={@uploads.program_bg}
+            myself={@myself}
+          />
+        </div>
+
         <div class="mt-6 flex items-center justify-end gap-x-6">
           <.link patch={@patch} class="text-sm font-semibold text-gray-400 hover:text-white">
             Cancel
@@ -83,139 +102,105 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
           </button>
         </div>
       </.form>
+    </div>
+    """
+  end
 
-      <div class="mt-6">
-        <label class="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          Attached Media
-        </label>
-
-        <%= if @current_media_links == [] do %>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-            No media attached yet
-          </p>
-        <% else %>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            Drag to reorder. Changes are saved immediately.
-          </p>
-
-          <div
-            id="biennale-media-links"
-            phx-hook="SortableMediaLinks"
+  defp image_upload(assigns) do
+    ~H"""
+    <div class="space-y-2">
+      <label class="block text-sm font-semibold text-gray-900">{@label}</label>
+      <%= if @image do %>
+        <div class="relative group inline-block">
+          <img
+            src={MykonosBiennale.Uploads.media_url(@image, size: "card")}
+            alt={@label}
+            class="w-full max-w-md h-32 object-cover rounded-lg border border-gray-300"
+          />
+          <button
+            type="button"
+            phx-click="remove_bg"
+            phx-value-role={if @label == "Statement Background", do: "statement_bg", else: "program_bg"}
             phx-target={@myself}
-            class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4"
+            class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            <div
-              :for={link <- @current_media_links}
-              data-media-id={link.media_id}
-              draggable="true"
-              class="relative group bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden"
-            >
-              <div class="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <%= case link.media.source_type do %>
-                  <% "upload" -> %>
-                    <%= if link.media.source_path do %>
-                      <img
-                        src={MykonosBiennale.Uploads.media_url(link.media, size: "thumb")}
-                        alt={link.media.alt_text || link.media.caption}
-                        class="w-full h-full object-cover"
-                      />
-                    <% else %>
-                      <.icon name="hero-photo" class="w-8 h-8 text-gray-400" />
-                    <% end %>
-                  <% "url" -> %>
-                    <%= if link.media.source_url do %>
-                      <img
-                        src={link.media.source_url}
-                        alt={link.media.alt_text || link.media.caption}
-                        class="w-full h-full object-cover"
-                      />
-                    <% else %>
-                      <.icon name="hero-link" class="w-8 h-8 text-gray-400" />
-                    <% end %>
-                  <% "embed" -> %>
-                    <.icon name="hero-video-camera" class="w-8 h-8 text-gray-400" />
-                <% end %>
-              </div>
-              <button
-                type="button"
-                phx-click="detach_media"
-                phx-value-media-id={link.media_id}
-                phx-target={@myself}
-                class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <.icon name="hero-x-mark" class="w-4 h-4" />
-              </button>
-
-              <div class="p-2 space-y-2">
-                <div class="text-xs text-gray-600 dark:text-gray-300 truncate">
-                  {link.media.caption || "Untitled"}
-                </div>
-
-                <form phx-change="update_media_link" phx-target={@myself} class="space-y-1">
-                  <input type="hidden" name="media_id" value={link.media_id} />
-                  <input
-                    name="metadata[caption_override]"
-                    value={link.metadata["caption_override"] || ""}
-                    placeholder="Caption override (optional)"
-                    class="w-full text-xs rounded border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 px-2 py-1"
-                  />
-                  <input
-                    name="metadata[alt_override]"
-                    value={link.metadata["alt_override"] || ""}
-                    placeholder="Alt override (optional)"
-                    class="w-full text-xs rounded border-gray-300 dark:border-gray-600 bg-white/80 dark:bg-gray-900/50 text-gray-900 dark:text-gray-100 px-2 py-1"
-                  />
-                </form>
-              </div>
-            </div>
-          </div>
-        <% end %>
-
-        <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Add Media
-          </label>
-          <form phx-change="attach_media" phx-target={@myself}>
-            <select
-              name="media_id"
-              class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-            >
-              <option value="">Select media to attach...</option>
-              <%= for media <- @available_media do %>
-                <option value={media.id}>
-                  {media.caption || "#{media.source_type} - #{media.id}"}
-                </option>
-              <% end %>
-            </select>
-          </form>
+            <.icon name="hero-x-mark" class="w-4 h-4" />
+          </button>
         </div>
-      </div>
+      <% else %>
+        <div
+          class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors"
+          phx-drop-target={@upload.ref}
+        >
+          <.live_file_input upload={@upload} class="hidden" />
+          <button
+            type="button"
+            phx-click={JS.dispatch("click", to: "##{@upload.ref}")}
+            class="text-blue-600 hover:text-blue-700 font-medium text-sm"
+          >
+            Click to upload or drag and drop
+          </button>
+          <p class="mt-1 text-xs text-gray-500">JPG, PNG, WEBP up to 10MB</p>
+        </div>
+      <% end %>
+
+      <%= for entry <- @upload.entries do %>
+        <div class="flex items-center justify-between bg-gray-50 p-2 rounded">
+          <div class="flex items-center gap-2">
+            <.icon name="hero-document" class="w-4 h-4 text-gray-400" />
+            <span class="text-sm text-gray-900">{entry.client_name}</span>
+            <span class="text-xs text-gray-500">{format_bytes(entry.client_size)}</span>
+          </div>
+          <button
+            type="button"
+            phx-click="cancel-upload"
+            phx-value-ref={entry.ref}
+            phx-target={@myself}
+            class="text-red-600 hover:text-red-700"
+          >
+            <.icon name="hero-x-mark" class="w-4 h-4" />
+          </button>
+        </div>
+      <% end %>
+
+      <%= for err <- upload_errors(@upload) do %>
+        <p class="text-sm text-red-600">{error_to_string(err)}</p>
+      <% end %>
     </div>
     """
   end
 
   @impl true
   def update(%{biennale: biennale} = assigns, socket) do
-    current_media_links =
+    media_links =
       if biennale.id do
         Content.list_entity_media_links_for_entity(biennale)
       else
         []
       end
 
-    all_media = Content.list_media()
-    attached_ids = Enum.map(current_media_links, & &1.media_id)
-    available_media = Enum.reject(all_media, fn m -> m.id in attached_ids end)
+    statement_bg = find_media_by_role(media_links, "statement_bg")
+    program_bg = find_media_by_role(media_links, "program_bg")
 
     {:ok,
-     socket
-     |> assign(assigns)
-     |> assign(:current_media_links, current_media_links)
-     |> assign(:available_media, available_media)
-     |> assign_new(:form, fn ->
-       changeset = BiennaleForm.changeset(%BiennaleForm{}, biennale_form_attrs(biennale))
-       to_form(changeset, as: :biennale)
-     end)}
+      socket
+      |> assign(assigns)
+      |> assign(:statement_bg, statement_bg)
+      |> assign(:program_bg, program_bg)
+      |> assign_new(:form, fn ->
+        changeset = BiennaleForm.changeset(%BiennaleForm{}, biennale_form_attrs(biennale))
+        to_form(changeset, as: :biennale)
+      end)
+      |> allow_upload(:statement_bg,
+        accept: ~w(.jpg .jpeg .png .webp),
+        max_entries: 1,
+        max_file_size: 10_000_000
+      )
+      |> allow_upload(:program_bg,
+        accept: ~w(.jpg .jpeg .png .webp),
+        max_entries: 1,
+        max_file_size: 10_000_000
+      )}
   end
 
   @impl true
@@ -230,71 +215,32 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
     {:noreply, assign(socket, form: to_form(changeset, as: :biennale))}
   end
 
-  def handle_event("attach_media", %{"media_id" => ""}, socket) do
-    {:noreply, socket}
+  def handle_event("cancel-upload", %{"ref" => ref}, socket) do
+    {:noreply, cancel_upload(socket, :statement_bg, ref)}
   end
 
-  def handle_event("attach_media", %{"media_id" => media_id}, socket) do
+  def handle_event("remove_bg", %{"role" => role}, socket) do
     biennale = socket.assigns.biennale
 
     if biennale.id do
-      media = Content.get_media!(media_id)
+      media = if role == "statement_bg", do: socket.assigns.statement_bg, else: socket.assigns.program_bg
 
-      case Content.attach_media_to_entity(biennale, media) do
-        {:ok, :attached} ->
-          current_media_links = Content.list_entity_media_links_for_entity(biennale)
-          all_media = Content.list_media()
-          attached_ids = Enum.map(current_media_links, & &1.media_id)
-          available_media = Enum.reject(all_media, fn m -> m.id in attached_ids end)
-
-          {:noreply,
-           socket
-           |> assign(:current_media_links, current_media_links)
-           |> assign(:available_media, available_media)
-           |> put_flash(:info, "Media attached successfully")}
-
-        {:error, reason} ->
-          {:noreply, put_flash(socket, :error, reason)}
+      if media do
+        Content.detach_media_from_entity(biennale, media)
       end
+
+      media_links = Content.list_entity_media_links_for_entity(biennale)
+      statement_bg = find_media_by_role(media_links, "statement_bg")
+      program_bg = find_media_by_role(media_links, "program_bg")
+
+      {:noreply,
+       socket
+       |> assign(:statement_bg, statement_bg)
+       |> assign(:program_bg, program_bg)
+       |> put_flash(:info, "Background removed")}
     else
-      {:noreply, put_flash(socket, :error, "Save the biennale first before attaching media")}
+      {:noreply, socket}
     end
-  end
-
-  def handle_event("detach_media", %{"media-id" => media_id}, socket) do
-    biennale = socket.assigns.biennale
-    media = Content.get_media!(media_id)
-
-    {:ok, :detached} = Content.detach_media_from_entity(biennale, media)
-
-    current_media_links = Content.list_entity_media_links_for_entity(biennale)
-    all_media = Content.list_media()
-    attached_ids = Enum.map(current_media_links, & &1.media_id)
-    available_media = Enum.reject(all_media, fn m -> m.id in attached_ids end)
-
-    {:noreply,
-     socket
-     |> assign(:current_media_links, current_media_links)
-     |> assign(:available_media, available_media)
-     |> put_flash(:info, "Media detached successfully")}
-  end
-
-  def handle_event("reorder_media_links", %{"media_ids" => media_ids}, socket) do
-    biennale = socket.assigns.biennale
-    media_ids = Enum.map(media_ids, &String.to_integer/1)
-    {:ok, :reordered} = Content.reorder_entity_media(biennale, media_ids)
-
-    current_media_links = Content.list_entity_media_links_for_entity(biennale)
-    {:noreply, assign(socket, :current_media_links, current_media_links)}
-  end
-
-  def handle_event("update_media_link", %{"media_id" => media_id, "metadata" => metadata}, socket) do
-    biennale = socket.assigns.biennale
-    media = %Media{id: String.to_integer(media_id)}
-    {:ok, :updated} = Content.update_entity_media_link(biennale, media, metadata)
-
-    current_media_links = Content.list_entity_media_links_for_entity(biennale)
-    {:noreply, assign(socket, :current_media_links, current_media_links)}
   end
 
   def handle_event("save", params, socket) do
@@ -310,6 +256,7 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
 
       case Content.update_biennale(socket.assigns.biennale, attrs) do
         {:ok, biennale} ->
+          process_uploads(socket, biennale)
           notify_parent({:saved, biennale})
 
           {:noreply,
@@ -340,6 +287,7 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
 
       case Content.create_biennale(attrs) do
         {:ok, biennale} ->
+          process_uploads(socket, biennale)
           notify_parent({:saved, biennale})
 
           {:noreply,
@@ -360,6 +308,42 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
     else
       {:noreply, assign(socket, form: to_form(%{changeset | action: :validate}, as: :biennale))}
     end
+  end
+
+  defp process_uploads(socket, biennale) do
+    consume_bg_upload(socket, biennale, :statement_bg, "statement_bg")
+    consume_bg_upload(socket, biennale, :program_bg, "program_bg")
+  end
+
+  defp consume_bg_upload(socket, biennale, upload_key, role) do
+    uploaded_files =
+      consume_uploaded_entries(socket, upload_key, fn %{path: path}, entry ->
+        ext = Path.extname(entry.client_name)
+        filename = "#{Ecto.UUID.generate()}#{ext}"
+        dest = MykonosBiennale.Uploads.uploads_path(filename)
+        MykonosBiennale.Uploads.ensure_uploads_dir()
+        File.cp!(path, dest)
+        {:ok, %{path: filename, mime_type: entry.client_type, original_name: entry.client_name}}
+      end)
+
+    for %{path: path, mime_type: mime_type, original_name: original_name} <- uploaded_files do
+      {:ok, media} =
+        Content.create_media(%{
+          caption: "#{role} - #{biennale.identity}",
+          source_type: "upload",
+          source_path: path,
+          mime_type: mime_type,
+          original_name: original_name
+        })
+
+      Content.attach_media_to_entity(biennale, media, metadata: %{"role" => role})
+    end
+  end
+
+  defp find_media_by_role(media_links, role) do
+    Enum.find_value(media_links, fn link ->
+      if link.metadata && link.metadata["role"] == role, do: link.media
+    end)
   end
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
@@ -433,4 +417,16 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Enum.into(%{})
   end
+
+  defp format_bytes(bytes) do
+    cond do
+      bytes >= 1_000_000 -> "#{Float.round(bytes / 1_000_000, 1)} MB"
+      bytes >= 1_000 -> "#{Float.round(bytes / 1_000, 1)} KB"
+      true -> "#{bytes} B"
+    end
+  end
+
+  defp error_to_string(:too_large), do: "File is too large (max 10MB)"
+  defp error_to_string(:not_accepted), do: "File type not accepted"
+  defp error_to_string(err), do: "Upload error: #{inspect(err)}"
 end

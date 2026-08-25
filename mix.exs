@@ -67,7 +67,8 @@ defmodule MykonosBiennale.MixProject do
       {:oban_web, "~> 2.12"},
       {:igniter, "~> 0.8.0", only: [:dev, :test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false}
+      {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
+      {:phoenix_prerender, "~> 0.2.0"}
     ]
   end
 
