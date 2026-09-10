@@ -55,6 +55,8 @@ defmodule MykonosBiennaleWeb.RouterCoverageTest do
     {:get, "/admin/films/new"},
     {:get, "/admin/films/:id/edit"},
     {:get, "/admin/films/:id"},
+    {:get, "/admin/teams"},
+    {:get, "/admin/teams/new"},
     {:get, "/admin/artworks"},
     {:get, "/admin/artworks/import_preview"},
     {:get, "/admin/artworks/merge"},

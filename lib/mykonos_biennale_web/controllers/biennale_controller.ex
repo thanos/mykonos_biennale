@@ -34,6 +34,7 @@ defmodule MykonosBiennaleWeb.BiennaleController do
         project_participants = batch_project_participants(Enum.map(raw_projects, & &1.id), rt, biennale_event_ids)
         project_directors = batch_project_directors(Enum.map(raw_projects, & &1.id), rt, biennale_event_ids)
         event_participants = batch_event_participants(Enum.map(raw_events, & &1.id), rt)
+        team_members = load_team_members(biennale, rt)
 
         projects = Enum.map(raw_projects, &present_project(&1, media_by_entity, project_event_ids, project_participants, project_directors))
         events = Enum.map(raw_events, &present_event(&1, media_by_entity, event_project_map, event_participants))
@@ -48,6 +49,7 @@ defmodule MykonosBiennaleWeb.BiennaleController do
 
         statement_bg_media = find_media_by_role(biennale_links, "statement_bg") || List.first(biennale_media)
         program_bg_media = find_media_by_role(biennale_links, "program_bg") || Enum.at(biennale_media, 1)
+        sponsors = load_sponsors(biennale_links)
 
         biennale_media_map =
           biennales
@@ -74,6 +76,8 @@ defmodule MykonosBiennaleWeb.BiennaleController do
         |> assign(:biennales, biennales)
         |> assign(:biennale_media_map, biennale_media_map)
         |> assign(:project_media, project_media)
+        |> assign(:team_members, team_members)
+        |> assign(:sponsors, sponsors)
         |> assign(
           :page_title,
           "#{biennale.fields["theme"]} — Mykonos Biennale #{biennale.fields["year"]}"
@@ -173,7 +177,7 @@ defmodule MykonosBiennaleWeb.BiennaleController do
   # -- Batch helpers --
 
   defp preload_relationship_types do
-    slugs = ["biennale_event", "event_project", "artwork_event", "artwork_participant", "directed", "screened_at"]
+    slugs = ["biennale_event", "event_project", "artwork_event", "artwork_participant", "directed", "screened_at", "biennale_team"]
     Repo.all(from rt in RelationshipType, where: rt.slug in ^slugs)
     |> Enum.into(%{}, fn rt -> {rt.slug, rt} end)
   end
@@ -199,6 +203,76 @@ defmodule MykonosBiennaleWeb.BiennaleController do
   defp find_media_by_role(links, role) do
     Enum.find_value(links, fn link ->
       if link.metadata && link.metadata["role"] == role, do: link.media
+    end)
+  end
+
+  @team_role_labels %{
+    "curator" => "Curator",
+    "producer" => "Producer",
+    "director" => "Director",
+    "coordinator" => "Coordinator",
+    "designer" => "Designer",
+    "technical" => "Technical",
+    "volunteer" => "Volunteer"
+  }
+
+  defp load_team_members(biennale, rt) do
+    bt_rt = Map.get(rt, "biennale_team")
+
+    if bt_rt do
+      rels =
+        Repo.all(
+          from r in Relationship,
+            where: r.subject_id == ^biennale.id and r.relationship_type_id == ^bt_rt.id,
+            preload: [:object]
+        )
+
+      participant_ids = Enum.map(rels, & &1.object_id)
+
+      headshots = batch_headshots(participant_ids)
+
+      Enum.map(rels, fn rel ->
+        participant = rel.object
+        role = rel.fields && rel.fields["role"]
+
+        %{
+          id: participant.id,
+          name: participant.identity,
+          role: role,
+          role_label: Map.get(@team_role_labels, role, role),
+          photo: Map.get(headshots, participant.id)
+        }
+      end)
+    else
+      []
+    end
+  end
+
+  defp batch_headshots(participant_ids) when participant_ids == [], do: %{}
+
+  defp batch_headshots(participant_ids) do
+    links =
+      Repo.all(
+        from em in EntityMedia,
+          where:
+            em.entity_id in ^participant_ids and
+              fragment("? ->> 'role'", em.metadata) == "headshot",
+          preload: [:media]
+      )
+
+    Map.new(links, fn link -> {link.entity_id, link.media} end)
+  end
+
+  defp load_sponsors(links) do
+    links
+    |> Enum.filter(fn link -> link.metadata && link.metadata["role"] == "sponsor" end)
+    |> Enum.map(fn link ->
+      %{
+        media_id: link.media_id,
+        media: link.media,
+        name: link.metadata["name"] || link.media.caption || "",
+        url: link.metadata["url"] || ""
+      }
     end)
   end
 

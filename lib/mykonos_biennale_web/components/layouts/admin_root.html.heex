@@ -151,6 +151,18 @@
                 >
                   Film
                 </.link>
+                <.link
+                  navigate="/admin/teams"
+                  class={[
+                    "block px-3 py-1.5 transition-colors",
+                    if(assigns[:current_page] == "teams",
+                      do: "text-white bg-purple-500/20",
+                      else: "text-gray-400 hover:text-white hover:bg-gray-800"
+                    )
+                  ]}
+                >
+                  Teams
+                </.link>
               </div>
             </div>
           </div>
@@ -385,6 +397,9 @@
             </.link>
             <.link navigate="/admin/films" class="text-sm text-gray-400 hover:text-white py-1">
               Film
+            </.link>
+            <.link navigate="/admin/teams" class="text-sm text-gray-400 hover:text-white py-1">
+              Teams
             </.link>
           </div>
         </div>

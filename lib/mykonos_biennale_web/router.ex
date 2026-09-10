@@ -130,6 +130,8 @@ defmodule MykonosBiennaleWeb.Router do
       live "/admin/films/new", Admin.FilmLive.Index, :new
       live "/admin/films/:id/edit", Admin.FilmLive.Index, :edit
       live "/admin/films/:id", Admin.FilmLive.Show, :show
+      live "/admin/teams", Admin.TeamLive.Index, :index
+      live "/admin/teams/new", Admin.TeamLive.Index, :new
       live "/admin/artworks", Admin.ArtworkLive.Index, :index
       live "/admin/artworks/import_preview", Admin.ArtworkLive.ReimportPreview, :index
       live "/admin/artworks/merge", Admin.ArtworkLive.Merge, :index

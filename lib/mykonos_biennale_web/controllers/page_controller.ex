@@ -6,6 +6,16 @@ defmodule MykonosBiennaleWeb.PageController do
   alias MykonosBiennale.Repo
   alias MykonosBiennale.Content.{Entity, EntityMedia, Relationship, RelationshipType}
 
+  @team_role_labels %{
+    "curator" => "Curator",
+    "producer" => "Producer",
+    "director" => "Director",
+    "coordinator" => "Coordinator",
+    "designer" => "Designer",
+    "technical" => "Technical",
+    "volunteer" => "Volunteer"
+  }
+
   def home(conn, _params) do
     current_biennale_year =
       Application.get_env(:mykonos_biennale, :current_biennale_year, 2021)
@@ -73,6 +83,8 @@ defmodule MykonosBiennaleWeb.PageController do
 
     statement_bg_media = find_media_by_role(biennale_links, "statement_bg") || List.first(biennale_media)
     program_bg_media = find_media_by_role(biennale_links, "program_bg") || Enum.at(biennale_media, 1)
+    team_members = load_team_members(current_biennale, rt)
+    sponsors = load_sponsors(biennale_links)
 
     biennale_media_map =
       biennales
@@ -91,6 +103,8 @@ defmodule MykonosBiennaleWeb.PageController do
     |> assign(:biennale_media_map, biennale_media_map)
     |> assign(:project_media, project_media)
     |> assign(:project_event_map, project_event_map)
+    |> assign(:team_members, team_members)
+    |> assign(:sponsors, sponsors)
     |> put_view(MykonosBiennaleWeb.BiennaleHTML)
     |> BiennaleController.render_template(current_biennale)
   end
@@ -146,7 +160,7 @@ defmodule MykonosBiennaleWeb.PageController do
 
   defp preload_relationship_types do
     import Ecto.Query, warn: false
-    slugs = ["biennale_event", "event_project", "artwork_event", "artwork_participant", "directed", "screened_at"]
+    slugs = ["biennale_event", "event_project", "artwork_event", "artwork_participant", "directed", "screened_at", "biennale_team"]
     _ = slugs
     Repo.all(from rt in RelationshipType, where: rt.slug in ^slugs)
     |> Enum.into(%{}, fn rt -> {rt.slug, rt} end)
@@ -175,6 +189,70 @@ defmodule MykonosBiennaleWeb.PageController do
   defp find_media_by_role(links, role) do
     Enum.find_value(links, fn link ->
       if link.metadata && link.metadata["role"] == role, do: link.media
+    end)
+  end
+
+  defp load_team_members(nil, _rt), do: []
+
+  defp load_team_members(biennale, rt) do
+    import Ecto.Query, warn: false
+    bt_rt = Map.get(rt, "biennale_team")
+
+    if bt_rt do
+      rels =
+        Repo.all(
+          from r in Relationship,
+            where: r.subject_id == ^biennale.id and r.relationship_type_id == ^bt_rt.id,
+            preload: [:object]
+        )
+
+      participant_ids = Enum.map(rels, & &1.object_id)
+
+      headshots = batch_headshots(participant_ids)
+
+      Enum.map(rels, fn rel ->
+        participant = rel.object
+        role = rel.fields && rel.fields["role"]
+
+        %{
+          id: participant.id,
+          name: participant.identity,
+          role: role,
+          role_label: Map.get(@team_role_labels, role, role),
+          photo: Map.get(headshots, participant.id)
+        }
+      end)
+    else
+      []
+    end
+  end
+
+  defp batch_headshots(participant_ids) when participant_ids == [], do: %{}
+
+  defp batch_headshots(participant_ids) do
+    import Ecto.Query, warn: false
+
+    links =
+      Repo.all(
+        from em in EntityMedia,
+          where:
+            em.entity_id in ^participant_ids and
+              fragment("? ->> 'role'", em.metadata) == "headshot",
+          preload: [:media]
+      )
+
+    Map.new(links, fn link -> {link.entity_id, link.media} end)
+  end
+
+  defp load_sponsors(links) do
+    Enum.filter(links, fn link -> link.metadata && link.metadata["role"] == "sponsor" end)
+    |> Enum.map(fn link ->
+      %{
+        media_id: link.media_id,
+        media: link.media,
+        name: link.metadata["name"] || link.media.caption || "",
+        url: link.metadata["url"] || ""
+      }
     end)
   end
 
