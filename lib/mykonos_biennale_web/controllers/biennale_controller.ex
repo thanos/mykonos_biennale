@@ -18,10 +18,12 @@ defmodule MykonosBiennaleWeb.BiennaleController do
         biennales = Content.list_biennales()
 
         all_entity_ids =
-          [biennale.id,
-           Enum.map(raw_projects, & &1.id),
-           Enum.map(raw_events, & &1.id),
-           Enum.map(biennales, & &1.id)]
+          [
+            biennale.id,
+            Enum.map(raw_projects, & &1.id),
+            Enum.map(raw_events, & &1.id),
+            Enum.map(biennales, & &1.id)
+          ]
           |> List.flatten()
           |> Enum.reject(&is_nil/1)
 
@@ -31,12 +33,32 @@ defmodule MykonosBiennaleWeb.BiennaleController do
         event_project_map = batch_event_project_ids(Enum.map(raw_events, & &1.id), rt)
         project_event_ids = batch_project_event_ids(Enum.map(raw_projects, & &1.id), rt)
         biennale_event_ids = Enum.map(raw_events, & &1.id)
-        project_participants = batch_project_participants(Enum.map(raw_projects, & &1.id), rt, biennale_event_ids)
-        project_directors = batch_project_directors(Enum.map(raw_projects, & &1.id), rt, biennale_event_ids)
+
+        project_participants =
+          batch_project_participants(Enum.map(raw_projects, & &1.id), rt, biennale_event_ids)
+
+        project_directors =
+          batch_project_directors(Enum.map(raw_projects, & &1.id), rt, biennale_event_ids)
+
         event_participants = batch_event_participants(Enum.map(raw_events, & &1.id), rt)
 
-        projects = Enum.map(raw_projects, &present_project(&1, media_by_entity, project_event_ids, project_participants, project_directors))
-        events = Enum.map(raw_events, &present_event(&1, media_by_entity, event_project_map, event_participants))
+        projects =
+          Enum.map(
+            raw_projects,
+            &present_project(
+              &1,
+              media_by_entity,
+              project_event_ids,
+              project_participants,
+              project_directors
+            )
+          )
+
+        events =
+          Enum.map(
+            raw_events,
+            &present_event(&1, media_by_entity, event_project_map, event_participants)
+          )
 
         project_event_map =
           events
@@ -46,8 +68,11 @@ defmodule MykonosBiennaleWeb.BiennaleController do
         biennale_media = Map.get(media_by_entity, biennale.id, [])
         biennale_links = Map.get(media_links_by_entity, biennale.id, [])
 
-        statement_bg_media = find_media_by_role(biennale_links, "statement_bg") || List.first(biennale_media)
-        program_bg_media = find_media_by_role(biennale_links, "program_bg") || Enum.at(biennale_media, 1)
+        statement_bg_media =
+          find_media_by_role(biennale_links, "statement_bg") || List.first(biennale_media)
+
+        program_bg_media =
+          find_media_by_role(biennale_links, "program_bg") || Enum.at(biennale_media, 1)
 
         biennale_media_map =
           biennales
@@ -58,7 +83,12 @@ defmodule MykonosBiennaleWeb.BiennaleController do
           raw_projects
           |> Enum.map(fn p ->
             media = Map.get(media_by_entity, p.id, [])
-            media = if media == [], do: fallback_project_media(p.id, project_event_ids, media_by_entity), else: media
+
+            media =
+              if media == [],
+                do: fallback_project_media(p.id, project_event_ids, media_by_entity),
+                else: media
+
             {p.id, media}
           end)
           |> Enum.into(%{})
@@ -91,9 +121,22 @@ defmodule MykonosBiennaleWeb.BiennaleController do
     end
   end
 
-  defp present_project(entity, media_by_entity, project_event_ids, project_participants, project_directors) do
+  defp present_project(
+         entity,
+         media_by_entity,
+         project_event_ids,
+         project_participants,
+         project_directors
+       ) do
     media = Map.get(media_by_entity, entity.id, [])
-    media = if media == [], do: fallback_project_media(entity.id, project_event_ids, media_by_entity), else: media
+
+    media =
+      if media == [],
+        do: fallback_project_media(entity.id, project_event_ids, media_by_entity),
+        else: media
+
+    participants = Map.get(project_participants, entity.id, [])
+    directors = Map.get(project_directors, entity.id, [])
 
     participants = Map.get(project_participants, entity.id, [])
     directors = Map.get(project_directors, entity.id, [])
@@ -173,7 +216,15 @@ defmodule MykonosBiennaleWeb.BiennaleController do
   # -- Batch helpers --
 
   defp preload_relationship_types do
-    slugs = ["biennale_event", "event_project", "artwork_event", "artwork_participant", "directed", "screened_at"]
+    slugs = [
+      "biennale_event",
+      "event_project",
+      "artwork_event",
+      "artwork_participant",
+      "directed",
+      "screened_at"
+    ]
+
     Repo.all(from rt in RelationshipType, where: rt.slug in ^slugs)
     |> Enum.into(%{}, fn rt -> {rt.slug, rt} end)
   end
@@ -236,7 +287,8 @@ defmodule MykonosBiennaleWeb.BiennaleController do
     end
   end
 
-  defp batch_project_participants(project_ids, _rt, _biennale_event_ids) when project_ids == [], do: %{}
+  defp batch_project_participants(project_ids, _rt, _biennale_event_ids) when project_ids == [],
+    do: %{}
 
   defp batch_project_participants(project_ids, rt, biennale_event_ids) do
     ap_rt = Map.get(rt, "artwork_participant")
@@ -284,7 +336,11 @@ defmodule MykonosBiennaleWeb.BiennaleController do
           rels
           |> Enum.group_by(& &1.subject_id)
           |> Enum.into(%{}, fn {artwork_id, rels} ->
-            people = rels |> Enum.map(&{&1.object.id, &1.object.identity}) |> Enum.reject(&(elem(&1, 0) == nil))
+            people =
+              rels
+              |> Enum.map(&{&1.object.id, &1.object.identity})
+              |> Enum.reject(&(elem(&1, 0) == nil))
+
             {artwork_id, people}
           end)
 
@@ -295,7 +351,10 @@ defmodule MykonosBiennaleWeb.BiennaleController do
             |> Enum.filter(&MapSet.member?(biennale_event_set, &1))
 
           p_artwork_ids = Enum.flat_map(p_event_ids, &Map.get(event_artwork_map, &1, []))
-          people = p_artwork_ids |> Enum.flat_map(&Map.get(artwork_participants, &1, [])) |> Enum.uniq()
+
+          people =
+            p_artwork_ids |> Enum.flat_map(&Map.get(artwork_participants, &1, [])) |> Enum.uniq()
+
           {project_id, people}
         end
       end
@@ -304,7 +363,8 @@ defmodule MykonosBiennaleWeb.BiennaleController do
     end
   end
 
-  defp batch_project_directors(project_ids, _rt, _biennale_event_ids) when project_ids == [], do: %{}
+  defp batch_project_directors(project_ids, _rt, _biennale_event_ids) when project_ids == [],
+    do: %{}
 
   defp batch_project_directors(project_ids, rt, biennale_event_ids) do
     directed_rt = Map.get(rt, "directed")
@@ -349,7 +409,11 @@ defmodule MykonosBiennaleWeb.BiennaleController do
           rels
           |> Enum.group_by(& &1.subject_id)
           |> Enum.into(%{}, fn {film_id, rels} ->
-            people = rels |> Enum.map(&{&1.object.id, &1.object.identity}) |> Enum.reject(&(elem(&1, 0) == nil))
+            people =
+              rels
+              |> Enum.map(&{&1.object.id, &1.object.identity})
+              |> Enum.reject(&(elem(&1, 0) == nil))
+
             {film_id, people}
           end)
 
@@ -404,13 +468,20 @@ defmodule MykonosBiennaleWeb.BiennaleController do
           rels
           |> Enum.group_by(& &1.subject_id)
           |> Enum.into(%{}, fn {artwork_id, rels} ->
-            people = rels |> Enum.map(&{&1.object.id, &1.object.identity}) |> Enum.reject(&(elem(&1, 0) == nil))
+            people =
+              rels
+              |> Enum.map(&{&1.object.id, &1.object.identity})
+              |> Enum.reject(&(elem(&1, 0) == nil))
+
             {artwork_id, people}
           end)
 
         for event_id <- event_ids, into: %{} do
           e_artwork_ids = Map.get(event_artwork_map, event_id, [])
-          people = e_artwork_ids |> Enum.flat_map(&Map.get(artwork_participants, &1, [])) |> Enum.uniq()
+
+          people =
+            e_artwork_ids |> Enum.flat_map(&Map.get(artwork_participants, &1, [])) |> Enum.uniq()
+
           {event_id, people}
         end
       end
@@ -454,7 +525,9 @@ defmodule MykonosBiennaleWeb.BiennaleController do
         from e in Entity,
           join: r in Relationship,
           on: r.subject_id == e.id,
-          where: e.type == "event" and r.object_id == ^biennale.id and r.relationship_type_id == ^be_rt.id,
+          where:
+            e.type == "event" and r.object_id == ^biennale.id and
+              r.relationship_type_id == ^be_rt.id,
           order_by: [desc: e.inserted_at]
       )
     else

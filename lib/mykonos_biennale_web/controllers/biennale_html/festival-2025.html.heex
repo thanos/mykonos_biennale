@@ -17,7 +17,10 @@
       <p class="text-2xl md:text-3xl text-red-600">
         {@biennale.fields["year"]}
       </p>
-      <h1 class="text-5xl md:text-7xl font-bold uppercase mb-4 text-white" style="text-shadow: 2px 2px 6px rgba(0,0,0,0.9);">
+      <h1
+        class="text-5xl md:text-7xl font-bold uppercase mb-4 text-white"
+        style="text-shadow: 2px 2px 6px rgba(0,0,0,0.9);"
+      >
         <br />{@biennale.fields["theme"]}
       </h1>
 
@@ -32,7 +35,10 @@
         </p>
       <% end %>
       <%= if @biennale.fields["statement"] do %>
-        <div class="text-left whitespace-pre-line leading-relaxed text-lg text-white mt-8" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.9);">
+        <div
+          class="text-left whitespace-pre-line leading-relaxed text-lg text-white mt-8"
+          style="text-shadow: 1px 1px 4px rgba(0,0,0,0.9);"
+        >
           {Phoenix.HTML.raw(@biennale.fields["statement"])}
         </div>
       <% end %>
@@ -76,59 +82,63 @@
       else
         ""
       end %>
-    <div id="program" class="relative my-8 px-6 py-20 md:py-32 bg-cover bg-center bg-no-repeat" style={program_bg}>
+    <div
+      id="program"
+      class="relative my-8 px-6 py-20 md:py-32 bg-cover bg-center bg-no-repeat"
+      style={program_bg}
+    >
       <%= if program_bg != "" do %>
         <div class="absolute inset-0 bg-black/40"></div>
       <% end %>
       <div class="relative z-10 max-w-4xl mx-auto">
-      <h2 class="text-4xl md:text-6xl font-bold uppercase mb-16 text-center">
-        Program {@biennale.fields["year"]}
-      </h2>
+        <h2 class="text-4xl md:text-6xl font-bold uppercase mb-16 text-center">
+          Program {@biennale.fields["year"]}
+        </h2>
 
-      <%= for date <- sorted_dates do %>
-        <% day_events = Map.get(events_by_date, date, [])
-        events_by_time = Enum.group_by(day_events, &(&1.time || ""))
-        sorted_times = Enum.sort(Enum.uniq(Enum.map(day_events, &(&1.time || "")))) %>
-        <% location = Enum.find_value(day_events, & &1.location) %>
-        <div class="mb-12">
-          <h3 class="text-2xl font-bold uppercase mb-1 text-red-600">
-            {format_day(date)}
-          </h3>
-          <%= if location do %>
-            <p class="text-sm text-gray-500 uppercase tracking-wider mb-6">
-              Location: {location}
-            </p>
-          <% end %>
-
-          <dl class="space-y-4">
-            <%= for time <- sorted_times do %>
-              <% time_events = Map.get(events_by_time, time, []) %>
-              <div class="flex gap-4 items-start">
-                <dt class="text-cyan-400 font-bold text-sm shrink-0 w-24">
-                  {format_time(time) || "TBA"}
-                </dt>
-                <dd class="flex-1 space-y-3">
-                  <%= for event <- time_events do %>
-                    <div>
-                      <h4 class="text-lg font-bold text-green-400">
-                        <a
-                          href={"/event/#{event.id}"}
-                          class="hover:text-green-300 transition-colors"
-                        >
-                          {event.title}
-                        </a>
-                      </h4>
-                      <%= if event.description do %>
-                        <p class="text-sm text-gray-400 mt-1">{event.description}</p>
-                      <% end %>
-                    </div>
-                  <% end %>
-                </dd>
-              </div>
+        <%= for date <- sorted_dates do %>
+          <% day_events = Map.get(events_by_date, date, [])
+          events_by_time = Enum.group_by(day_events, &(&1.time || ""))
+          sorted_times = Enum.sort(Enum.uniq(Enum.map(day_events, &(&1.time || "")))) %>
+          <% location = Enum.find_value(day_events, & &1.location) %>
+          <div class="mb-12">
+            <h3 class="text-2xl font-bold uppercase mb-1 text-red-600">
+              {format_day(date)}
+            </h3>
+            <%= if location do %>
+              <p class="text-sm text-gray-500 uppercase tracking-wider mb-6">
+                Location: {location}
+              </p>
             <% end %>
-          </dl>
-        </div>
-      <% end %>
+
+            <dl class="space-y-4">
+              <%= for time <- sorted_times do %>
+                <% time_events = Map.get(events_by_time, time, []) %>
+                <div class="flex gap-4 items-start">
+                  <dt class="text-cyan-400 font-bold text-sm shrink-0 w-24">
+                    {format_time(time) || "TBA"}
+                  </dt>
+                  <dd class="flex-1 space-y-3">
+                    <%= for event <- time_events do %>
+                      <div>
+                        <h4 class="text-lg font-bold text-green-400">
+                          <a
+                            href={"/event/#{event.id}"}
+                            class="hover:text-green-300 transition-colors"
+                          >
+                            {event.title}
+                          </a>
+                        </h4>
+                        <%= if event.description do %>
+                          <p class="text-sm text-gray-400 mt-1">{event.description}</p>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </dd>
+                </div>
+              <% end %>
+            </dl>
+          </div>
+        <% end %>
       </div>
     </div>
   <% end %>
@@ -183,8 +193,19 @@
             <%= if project.participants != [] do %>
               <p class="text-xs text-gray-600 mt-2">
                 <%= for {id, name} <- project.participants do %>
-                  <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">{name}</a>
-                  <%= unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · " %>
+                  <<<<<<<
+                    HEAD
+                    <a
+                    href={"/artist/#{id}"}
+                    class="hover:text-red-500 transition-colors"
+                  >
+                    {name}
+                  </<<<<<<>
+                  {unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · "} =======
+                  <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">
+                    {name}
+                  </a>
+                  {unless id == List.last(Enum.map(project.participants, &elem(&1, 0))), do: " · "} >>>>>>> 8320a23c79d2c93e1c0de1e22a205d851152b9b6
                 <% end %>
               </p>
             <% end %>
@@ -192,8 +213,10 @@
               <p class="text-xs text-gray-600 mt-1">
                 Dir.
                 <%= for {id, name} <- project.directors do %>
-                  <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">{name}</a>
-                  <%= unless id == List.last(Enum.map(project.directors, &elem(&1, 0))), do: " · " %>
+                  <a href={"/artist/#{id}"} class="hover:text-red-500 transition-colors">
+                    {name}
+                  </a>
+                  {unless id == List.last(Enum.map(project.directors, &elem(&1, 0))), do: " · "}
                 <% end %>
               </p>
             <% end %>
