@@ -84,7 +84,10 @@ defmodule MykonosBiennaleWeb.BiennaleControllerTest do
         )
 
       participant = ContentFixtures.participant_fixture(first_name: "Team", last_name: "Person")
-      ContentFixtures.create_relationship(biennale, participant, "biennale_team", %{"role" => "curator"})
+
+      ContentFixtures.create_relationship(biennale, participant, "biennale_team", %{
+        "role" => "curator"
+      })
 
       html = html_response(get(conn, "/biennale/#{biennale.slug}"), 200)
       assert html =~ "Team 2026"

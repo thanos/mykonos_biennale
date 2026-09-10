@@ -94,8 +94,14 @@
           <label class="block text-sm font-semibold text-gray-900 mb-1">Participant</label>
           <%= if @selected_participant do %>
             <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
-              <span class="text-sm font-medium text-gray-900">{@selected_participant.identity}</span>
-              <button type="button" phx-click="clear_participant" class="text-red-600 hover:text-red-700 text-xs">
+              <span class="text-sm font-medium text-gray-900">
+                {@selected_participant.identity}
+              </span>
+              <button
+                type="button"
+                phx-click="clear_participant"
+                class="text-red-600 hover:text-red-700 text-xs"
+              >
                 Change
               </button>
             </div>
@@ -127,7 +133,10 @@
 
         <div>
           <label class="block text-sm font-semibold text-gray-900 mb-1">Role</label>
-          <select name="role" class="w-full rounded-lg border-gray-300 bg-white text-gray-900 px-3 py-2">
+          <select
+            name="role"
+            class="w-full rounded-lg border-gray-300 bg-white text-gray-900 px-3 py-2"
+          >
             <option value="">Select role...</option>
             <%= for {value, label} <- @team_roles do %>
               <option value={value}>{label}</option>
@@ -140,7 +149,12 @@
           <div class="space-y-1">
             <%= for b <- @biennales do %>
               <label class="flex items-center gap-2 text-sm text-gray-900">
-                <input type="checkbox" name={"biennale_#{b.id}"} value="true" class="rounded border-gray-300" />
+                <input
+                  type="checkbox"
+                  name={"biennale_#{b.id}"}
+                  value="true"
+                  class="rounded border-gray-300"
+                />
                 {b.fields["year"]}
               </label>
             <% end %>
@@ -148,10 +162,16 @@
         </div>
 
         <div class="flex items-center justify-end gap-3 pt-2">
-          <.link patch="/admin/teams" class="text-sm font-semibold text-gray-500 hover:text-gray-700">
+          <.link
+            patch="/admin/teams"
+            class="text-sm font-semibold text-gray-500 hover:text-gray-700"
+          >
             Cancel
           </.link>
-          <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg">
+          <button
+            type="submit"
+            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg"
+          >
             Add Team Member
           </button>
         </div>

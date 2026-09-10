@@ -113,7 +113,10 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
 
           <%= if @team_members != [] do %>
             <div class="space-y-2 mb-4">
-              <div :for={member <- @team_members} class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+              <div
+                :for={member <- @team_members}
+                class="flex items-center justify-between bg-gray-50 rounded-lg p-3"
+              >
                 <div class="flex items-center gap-3">
                   <img
                     :if={member.photo}
@@ -158,7 +161,10 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
             />
             <%= if @team_search_results != [] do %>
               <div class="border border-gray-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-gray-100">
-                <div :for={p <- @team_search_results} class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50">
+                <div
+                  :for={p <- @team_search_results}
+                  class="flex items-center gap-2 px-3 py-2 hover:bg-blue-50"
+                >
                   <select
                     name={"role_#{p.id}"}
                     phx-change="add_team_member"
@@ -181,63 +187,66 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
             <% end %>
           </div>
 
-        <hr class="my-6 border-gray-200" />
+          <hr class="my-6 border-gray-200" />
 
-        <h3 class="text-sm font-semibold text-gray-900 mb-3">Sponsors</h3>
+          <h3 class="text-sm font-semibold text-gray-900 mb-3">Sponsors</h3>
 
-        <%= if @sponsors != [] do %>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-            <div :for={sponsor <- @sponsors} class="relative group bg-gray-50 rounded-lg overflow-hidden">
-              <div class="aspect-video bg-gray-100 flex items-center justify-center">
-                <%= if sponsor.media do %>
-                  <img
-                    src={MykonosBiennale.Uploads.media_url(sponsor.media, size: "card")}
-                    alt={sponsor.name}
-                    class="w-full h-full object-contain p-2"
-                  />
-                <% else %>
-                  <.icon name="hero-photo" class="w-8 h-8 text-gray-400" />
-                <% end %>
-              </div>
-              <div class="p-2">
-                <div class="text-xs text-gray-700 truncate">{sponsor.name}</div>
-                <%= if sponsor.url do %>
-                  <div class="text-xs text-gray-400 truncate">{sponsor.url}</div>
-                <% end %>
-              </div>
-              <button
-                type="button"
-                phx-click="remove_sponsor"
-                phx-value-media-id={sponsor.media_id}
-                phx-target={@myself}
-                class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+          <%= if @sponsors != [] do %>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+              <div
+                :for={sponsor <- @sponsors}
+                class="relative group bg-gray-50 rounded-lg overflow-hidden"
               >
-                <.icon name="hero-x-mark" class="w-4 h-4" />
-              </button>
+                <div class="aspect-video bg-gray-100 flex items-center justify-center">
+                  <%= if sponsor.media do %>
+                    <img
+                      src={MykonosBiennale.Uploads.media_url(sponsor.media, size: "card")}
+                      alt={sponsor.name}
+                      class="w-full h-full object-contain p-2"
+                    />
+                  <% else %>
+                    <.icon name="hero-photo" class="w-8 h-8 text-gray-400" />
+                  <% end %>
+                </div>
+                <div class="p-2">
+                  <div class="text-xs text-gray-700 truncate">{sponsor.name}</div>
+                  <%= if sponsor.url do %>
+                    <div class="text-xs text-gray-400 truncate">{sponsor.url}</div>
+                  <% end %>
+                </div>
+                <button
+                  type="button"
+                  phx-click="remove_sponsor"
+                  phx-value-media-id={sponsor.media_id}
+                  phx-target={@myself}
+                  class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <.icon name="hero-x-mark" class="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </div>
-        <% end %>
+          <% end %>
 
-        <div class="space-y-2">
-          <.image_upload
-            label="Add Sponsor Logo"
-            image={nil}
-            upload={@uploads.sponsor_logo}
-            myself={@myself}
-          />
-          <input
-            type="text"
-            name="sponsor_name"
-            placeholder="Sponsor name (optional, set after upload)"
-            class="w-full rounded-lg border-gray-300 bg-white text-gray-900 px-3 py-2"
-          />
-          <input
-            type="url"
-            name="sponsor_url"
-            placeholder="Sponsor website URL (optional)"
-            class="w-full rounded-lg border-gray-300 bg-white text-gray-900 px-3 py-2"
-          />
-        </div>
+          <div class="space-y-2">
+            <.image_upload
+              label="Add Sponsor Logo"
+              image={nil}
+              upload={@uploads.sponsor_logo}
+              myself={@myself}
+            />
+            <input
+              type="text"
+              name="sponsor_name"
+              placeholder="Sponsor name (optional, set after upload)"
+              class="w-full rounded-lg border-gray-300 bg-white text-gray-900 px-3 py-2"
+            />
+            <input
+              type="url"
+              name="sponsor_url"
+              placeholder="Sponsor website URL (optional)"
+              class="w-full rounded-lg border-gray-300 bg-white text-gray-900 px-3 py-2"
+            />
+          </div>
         <% end %>
 
         <div class="mt-6 flex items-center justify-end gap-x-6">
@@ -267,7 +276,9 @@ defmodule MykonosBiennaleWeb.Admin.BiennaleLive.FormComponent do
           <button
             type="button"
             phx-click="remove_bg"
-            phx-value-role={if @label == "Statement Background", do: "statement_bg", else: "program_bg"}
+            phx-value-role={
+              if @label == "Statement Background", do: "statement_bg", else: "program_bg"
+            }
             phx-target={@myself}
             class="absolute top-2 right-2 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
           >

@@ -70,7 +70,7 @@ defmodule MykonosBiennaleWeb.Admin.TeamLive.Index do
                 role: rel.fields && rel.fields["role"]
               }
             end)
-            |> Enum.sort_by(&-&1.year)
+            |> Enum.sort_by(&(-&1.year))
 
           %{participant_id: participant_id, name: participant.identity, memberships: memberships}
         end)
@@ -85,7 +85,11 @@ defmodule MykonosBiennaleWeb.Admin.TeamLive.Index do
   # -- Events --
 
   @impl true
-  def handle_event("search_participants", %{"participant_search" => search, "_target" => _}, socket) do
+  def handle_event(
+        "search_participants",
+        %{"participant_search" => search, "_target" => _},
+        socket
+      ) do
     results =
       if String.trim(search) != "" do
         pattern = "%#{String.downcase(search)}%"
@@ -103,7 +107,8 @@ defmodule MykonosBiennaleWeb.Admin.TeamLive.Index do
         []
       end
 
-    {:noreply, socket |> assign(:participant_search, search) |> assign(:participant_results, results)}
+    {:noreply,
+     socket |> assign(:participant_search, search) |> assign(:participant_results, results)}
   end
 
   def handle_event("select_participant", %{"participant-id" => pid}, socket) do

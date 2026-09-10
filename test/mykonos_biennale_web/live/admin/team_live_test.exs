@@ -7,7 +7,10 @@ defmodule MykonosBiennaleWeb.Admin.TeamLiveTest do
     test "lists team members grouped by participant with biennale years and roles", %{conn: conn} do
       biennale = ContentFixtures.biennale_fixture(year: 2025)
       participant = ContentFixtures.participant_fixture(first_name: "Team", last_name: "Member")
-      ContentFixtures.create_relationship(biennale, participant, "biennale_team", %{"role" => "curator"})
+
+      ContentFixtures.create_relationship(biennale, participant, "biennale_team", %{
+        "role" => "curator"
+      })
 
       {:ok, _lv, html} = live(conn, ~p"/admin/teams")
       assert html =~ "Team Member"
